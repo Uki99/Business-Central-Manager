@@ -36,7 +36,7 @@ function Update-CheckBCManager {
     $repo = "Business-Central-Manager"
     
     try {
-        Update-BCManager -owner $owner -repo $repo -version $settings.settings.verion
+        Update-BCManager -owner $owner -repo $repo -version $settings.settings.verion -upToDateMessage $false
     } catch {
         $errorMessage = $_.ToString()
         Write-Host "Error occurred during application update:`n$errorMessage`n`nPress any key to continue" -ForegroundColor Red

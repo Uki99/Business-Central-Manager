@@ -6,7 +6,8 @@ function Update-BCManager {
     param (
         [string] $owner,
         [string] $repo,
-        [string] $currentVersion
+        [string] $currentVersion,
+        [boolean] $upToDateMessage
     )
 
     # Step 1: Send a request to get the latest release information
@@ -47,7 +48,7 @@ function Update-BCManager {
     $lcurrentVersion = [version] $version
 
     if ($tempVersion -gt $lcurrentVersion) {
-        $ConfirmApplicationUpdate = [System.Windows.Forms.MessageBox]::Show("Updates for Business Central Manager were found. Do you want to download updates now?", "Confirm Application Update", "YesNo", "Question") | Out-Null      
+        $ConfirmApplicationUpdate = [System.Windows.Forms.MessageBox]::Show(("Updates for Business Central Manager were found.`nCurrent version: {0}`nLatest version: {2}`n`nDo you want to download updates now?" -f $lcurrentVersion $tempVersion), "Confirm Application Update", "YesNo", "Question") | Out-Null      
         if ($ConfirmApplicationUpdate -eq "No") {
             return
         }
@@ -65,7 +66,9 @@ function Update-BCManager {
         Restart-BusinessCentralManager
     } else {
         Write-Host "Business Central Manager is up to date.`n"
-        [System.Windows.Forms.MessageBox]::Show("Business Central Manager is up to date.`n", "Success", "OK", "Asterisk") | Out-Null
+        if ($upToDateMessage) {
+            [System.Windows.Forms.MessageBox]::Show("Business Central Manager is already up to date.`n", "Success", "OK", "Asterisk") | Out-Null
+        }
 
         # Step 7: Cleanup - remove temporary files and folders
         Remove-Item -Path $tempZipPath, $tempFolder -Force -Recurse -ErrorAction StopS
