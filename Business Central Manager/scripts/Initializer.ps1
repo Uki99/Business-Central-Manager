@@ -4,8 +4,11 @@
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 Set-ExecutionPolicy Unrestricted
+
+Import-Module -Force (($PSScriptRoot | Split-Path) + "\scripts\modules\BCManager-UpdateManagement.ps1")
+Import-Module -Force (($PSScriptRoot | Split-Path) + "\scripts\modules\BCContainerHelper-UpdateManagement.ps1")
+
 Add-Type -AssemblyName System.Windows.Forms
-Import-Module -Force (($PSScriptRoot | Split-Path) + "\scripts\Update-Management.ps1")
 
 # Load settings from json
 try {
@@ -25,7 +28,7 @@ catch {
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 # Used to check and update application
-function Update-CheckBCManager {
+function Update-BCManager {
     if (-not $settings.settings.CheckForApplicationUpdateOnStart) {
         return
     }
@@ -53,47 +56,12 @@ function Update-BcContainerHelper {
 
     Write-Host "Checking for BcContainerHelper module updates. Please wait...`n"
 
-    # Check if BCContainerHelper module is installed
-    $installedModule = Get-InstalledModule -Name BcContainerHelper -ErrorAction SilentlyContinue
-
-    if ($installedModule) {
-        $newestVersion = Get-Module -ListAvailable -Name BcContainerHelper | Select-Object -ExpandProperty Version | Sort-Object -Descending | Select-Object -First 1
-
-        if ($newestVersion -gt $installedModule.Version) {		
-            $ConfirmModuleUpdate = [System.Windows.Forms.MessageBox]::Show("PowerShell module BCContainerHelper found. Do you want to update the module?", "Confirm Module Update", "YesNo", "Question")      
-            if ($ConfirmModuleUpdate -eq "No") {
-                return
-            }
-            
-            Write-Host "Updating BCContainerHelper module. Please wait...`n"
-            
-            try {
-                Update-Module BcContainerHelper -ErrorAction Stop
-            } catch {
-                $errorMessage = $_.ToString()
-                Write-Host "Error occurred during module update:`n$errorMessage`n`nPress any key to continue" -ForegroundColor Red
-                $null = Read-Host
-            }
-
-            Write-Host "Module BCContainerHelper successfully updated!", "BcContainerHelper Update" -ForegroundColor Green
-        } elseif ($newestVersion -eq $installedModule.Version) {
-            Write-Host "BCContainerHelper module is already up to date.`n"
-            return
-        }
-    }
-    else {
-        [System.Windows.Forms.MessageBox]::Show("PowerShell module BCContainerHelper not found. Press OK to install the required module now...", "BCContainerHelper Install", "OK", "Warning") | Out-Null
-        Write-Host "Installing BCContainerHelper module. Please wait...`n" -ForegroundColor Green
-
-        try {
-            Install-Module BCContainerHelper -Force -ErrorAction Stop
-        } catch {
-            $errorMessage = $_.ToString()
-            Write-Host "Error occurred during module installation:`n$errorMessage`n`nPress any key to continue" -ForegroundColor Red
-            $null = Read-Host
-        }
-
-        Write-Host "Module BCContainerHelper successfully installed!" -ForegroundColor Green
+    try {
+        Update-BCContainerHelperModule
+    } catch {
+        $errorMessage = $_.ToString()
+        Write-Host "Error occurred during BCContainerHelper update:`n$errorMessage`n`nPress any key to continue" -ForegroundColor Red
+        $null = Read-Host
     }
 }
 
@@ -105,7 +73,7 @@ function Update-BcContainerHelper {
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 Write-Host "Running initializer...`n`n" -ForegroundColor Green
-Update-CheckBCManager
+Update-BCManager
 Update-BcContainerHelper
 
 Exit 0

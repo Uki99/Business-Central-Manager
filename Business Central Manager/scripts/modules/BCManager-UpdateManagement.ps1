@@ -1,7 +1,8 @@
-### Update Management ###
+# Management script container that has functionality for application update #
 
 Set-ExecutionPolicy Unrestricted
 
+# Used to update Business Central Application
 function Update-BCManager {
     param (
         [string] $owner,
@@ -10,7 +11,7 @@ function Update-BCManager {
         [boolean] $upToDateMessage
     )
 
-    # Step 1: Send a request to get the latest release information
+    # Step 1: Send a request to get the latest release information from GitHub
     $uri = "https://api.github.com/repos/$owner/$repo/releases/latest"
     $releaseInfo = Invoke-RestMethod -Uri $uri -Method Get -ErrorAction Stop
 
@@ -30,7 +31,6 @@ function Update-BCManager {
     # Extract the zipball
     Expand-Archive -Path $tempZipPath -DestinationPath $tempFolder -Force -ErrorAction Stop
 
-    # Step 4: Check if update is needed
     # Search for the dynamically generated folder name
     $generatedFolder = Get-ChildItem -Path $tempFolder -Directory | Where-Object { $_.Name -like "$owner-$repo-*" }
 
@@ -47,22 +47,25 @@ function Update-BCManager {
     $tempVersion = [version] $tempSettings.settings.ApplicationVersion
     $lcurrentVersion = [version] $currentVersion
 
+    # Step 4: Check if update is needed
     if ($tempVersion -gt $lcurrentVersion) {
-        $ConfirmApplicationUpdate = [System.Windows.Forms.MessageBox]::Show(("Updates for Business Central Manager were found.`nCurrent version: {0}`nLatest version: {1}`n`nDo you want to download updates now?" -f $lcurrentVersion, $tempVersion), "Confirm Application Update", "YesNo", "Question")      
+        $ConfirmApplicationUpdate = [System.Windows.Forms.MessageBox]::Show(("Updates for Business Central Manager were found.`n`nCurrent version: {0}`nLatest version: {1}`n`nDo you want to download updates now?" -f $lcurrentVersion, $tempVersion), "Confirm Application Update", "YesNo", "Question")      
         if ($ConfirmApplicationUpdate -eq "No") {
             return
         }
 
-        Write-Host "Updating Business Central Manager application. Please wait...`n" -ForegroundColor Green
+        Write-Host "Updating Business Central Manager application. Please wait...`n"
 
         # Step 5: Replace files in the running folder
-        Copy-Item "$fullPathToGeneratedFolder\Business Central Manager\*" -Destination ($PSScriptRoot | Split-Path) -Recurse -Force -ErrorAction Stop
+        $applicationRootLocation = ($PSScriptRoot | Split-Path | Split-Path)
+        Copy-Item "$fullPathToGeneratedFolder\Business Central Manager\*" -Destination $applicationRootLocation -Recurse -Force -ErrorAction Stop
         
         # Step 6: Cleanup - remove temporary files and folders
         Remove-Item -Path $tempZipPath, $tempFolder -Force -Recurse -ErrorAction Stop
 
-        Write-Host "Successfuly updated Business Central Manager to version $tempVersion...`n" -ForegroundColor Green
-        [System.Windows.Forms.MessageBox]::Show(("Successfuly updated Business Central Manager to version {0}. Restarting application." -f $tempVersion), "Success", "OK", "Asterisk") | Out-Null
+        Write-Host "Successfuly updated Business Central Manager to version $tempVersion. Restarting application.`n" -ForegroundColor Green
+        [System.Windows.Forms.MessageBox]::Show(("Successfuly updated Business Central Manager to the version {0}. Restarting application." -f $tempVersion), "Success", "OK", "Asterisk") | Out-Null
+
         Restart-BusinessCentralManager
     } else {
         Write-Host "Business Central Manager is up to date.`n"
@@ -71,7 +74,7 @@ function Update-BCManager {
         }
 
         # Step 7: Cleanup - remove temporary files and folders
-        Remove-Item -Path $tempZipPath, $tempFolder -Force -Recurse -ErrorAction StopS
+        Remove-Item -Path $tempZipPath, $tempFolder -Force -Recurse -ErrorAction Stop
     }
 }
 
