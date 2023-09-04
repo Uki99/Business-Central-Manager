@@ -42,13 +42,13 @@ function Update-BCManager {
         throw "Temp path could not be resolved while updating Business Central manager."
     }
 
-    $tempSettings = Get-Content (fullPathToGeneratedFolder + "\Business Central Manager\data\settings.json") -Raw | ConvertFrom-Json -ErrorAction Stop
+    $tempSettings = Get-Content ($fullPathToGeneratedFolder + "\Business Central Manager\data\settings.json") -Raw | ConvertFrom-Json -ErrorAction Stop
 
     $tempVersion = [version] $tempSettings.settings.ApplicationVersion
     $lcurrentVersion = [version] $version
 
     if ($tempVersion -gt $lcurrentVersion) {
-        $ConfirmApplicationUpdate = [System.Windows.Forms.MessageBox]::Show(("Updates for Business Central Manager were found.`nCurrent version: {0}`nLatest version: {2}`n`nDo you want to download updates now?" -f $lcurrentVersion $tempVersion), "Confirm Application Update", "YesNo", "Question") | Out-Null      
+        $ConfirmApplicationUpdate = [System.Windows.Forms.MessageBox]::Show(("Updates for Business Central Manager were found.`nCurrent version: {0}`nLatest version: {2}`n`nDo you want to download updates now?" -f $lcurrentVersion, $tempVersion), "Confirm Application Update", "YesNo", "Question") | Out-Null      
         if ($ConfirmApplicationUpdate -eq "No") {
             return
         }
