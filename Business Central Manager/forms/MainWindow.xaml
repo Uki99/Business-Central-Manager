@@ -820,6 +820,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                             <RowDefinition />
                         </Grid.RowDefinitions>
                         
@@ -852,8 +853,11 @@
                         <TextBlock Text="Delay BcContainerHelper Module Import:" Grid.Row="7" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
                         <CheckBox x:Name="DelayBcContainerHelperModuleImport" Grid.Row="7" Grid.Column="1" Margin="10" VerticalAlignment="Center" />
 
+                        <TextBlock Text="Check for Updates on Start:" Grid.Row="8" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
+                        <CheckBox x:Name="CheckForApplicationUpdateOnStart" Grid.Row="8" Grid.Column="1" Margin="10" VerticalAlignment="Center" />
+
                         <Button VerticalAlignment="Bottom"
-                                Grid.Row="8"
+                                Grid.Row="9"
                                 Grid.ColumnSpan="2"
                                 Margin="0,10,0,30"
                                 Foreground="White"

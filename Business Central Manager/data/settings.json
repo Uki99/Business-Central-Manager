@@ -1,12 +1,13 @@
 {
     "settings":  {
-                     "ApplicationVersion":  "v1.0.20230528",
+                     "ApplicationVersion":  "v1.0.2023090401",
                      "HidePowerShellConsole":  true,
                      "NavAdminTool":  "C:\\Program Files\\Microsoft Dynamics 365 Business Central\\220\\Service\\NavAdminTool.ps1",
                      "MainWindowXAMLRelativePath":  "\\forms\\MainWindow.xaml",
                      "SupportedBusinessCentralVersion":  "22.*",
                      "UnpublishLastInstalledAppDuringUpgrade":  true,
                      "SearchForUpdateBcContainerHelper":  false,
-                     "DelayBcContainerHelperModuleImport":  true
+                     "DelayBcContainerHelperModuleImport":  true,
+                     "CheckForApplicationUpdateOnStart":  true
                  }
 }

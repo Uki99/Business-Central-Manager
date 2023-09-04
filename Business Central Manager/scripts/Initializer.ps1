@@ -5,6 +5,7 @@
 
 Set-ExecutionPolicy Unrestricted
 Add-Type -AssemblyName System.Windows.Forms
+Import-Module -Force (($PSScriptRoot | Split-Path) + "\scripts\Update-Management.ps1")
 
 # Load settings from json
 try {
@@ -22,6 +23,27 @@ catch {
 
                                                                                   ### Function Section ###
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+# Used to check and update application
+function Update-CheckBCManager {
+    if (-not $settings.settings.CheckForApplicationUpdateOnStart) {
+        return
+    }
+
+    Write-Host "Checking for Business Central Manager updates. Please wait...`n"
+    
+    $owner = "Uki99"
+    $repo = "Business-Central-Manager"
+    
+    try {
+        Update-BCManager -owner $owner -repo $repo -version $settings.settings.verion
+    } catch {
+        $errorMessage = $_.ToString()
+        Write-Host "Error occurred during application update:`n$errorMessage`n`nPress any key to continue" -ForegroundColor Red
+        $null = Read-Host
+    }
+}
+
 
 # Used to update/install the required module BcContainer helper neccesary for application
 function Update-BcContainerHelper {
@@ -43,19 +65,19 @@ function Update-BcContainerHelper {
                 return
             }
             
-            Write-Host "Updating BCContainerHelper module. Please wait...`n" -ForegroundColor Green
+            Write-Host "Updating BCContainerHelper module. Please wait...`n"
             
             try {
                 Update-Module BcContainerHelper -ErrorAction Stop
             } catch {
                 $errorMessage = $_.ToString()
-                Write-Host "Error occurred during module update:`n$errorMessage"
-                Exit 1
+                Write-Host "Error occurred during module update:`n$errorMessage`n`nPress any key to continue" -ForegroundColor Red
+                $null = Read-Host
             }
 
-            [System.Windows.Forms.MessageBox]::Show("Module BCContainerHelper successfully updated!", "BcContainerHelper Update", "OK", "Asterisk") | Out-Null
+            Write-Host "Module BCContainerHelper successfully updated!", "BcContainerHelper Update" -ForegroundColor Green
         } elseif ($newestVersion -eq $installedModule.Version) {
-            Write-Host "BCContainerHelper module is already up to date.`n" -ForegroundColor Green
+            Write-Host "BCContainerHelper module is already up to date.`n"
             return
         }
     }
@@ -67,11 +89,11 @@ function Update-BcContainerHelper {
             Install-Module BCContainerHelper -Force -ErrorAction Stop
         } catch {
             $errorMessage = $_.ToString()
-            Write-Host "Error occurred during module installation:`n$errorMessage"
-            Exit 1
+            Write-Host "Error occurred during module installation:`n$errorMessage`n`nPress any key to continue" -ForegroundColor Red
+            $null = Read-Host
         }
 
-        [System.Windows.Forms.MessageBox]::Show("Module BCContainerHelper successfully installed!", "Success", "OK", "Asterisk") | Out-Null
+        Write-Host "Module BCContainerHelper successfully installed!" -ForegroundColor Green
     }
 }
 
@@ -83,6 +105,7 @@ function Update-BcContainerHelper {
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 Write-Host "Running initializer...`n`n" -ForegroundColor Green
+Update-CheckBCManager
 Update-BcContainerHelper
 
 Exit 0
