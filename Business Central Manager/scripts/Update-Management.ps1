@@ -1,6 +1,7 @@
+### Update Management ###
+
 Set-ExecutionPolicy Unrestricted
 
-### Update Management ###
 function Update-BCManager {
     param (
         [string] $owner,
@@ -46,7 +47,7 @@ function Update-BCManager {
     $lcurrentVersion = [version] $version
 
     if ($tempVersion -gt $lcurrentVersion) {
-        $ConfirmApplicationUpdate = [System.Windows.Forms.MessageBox]::Show("Updates for Business Central Manager were found. Do you want to update now?", "Confirm Application Update", "YesNo", "Question") | Out-Null      
+        $ConfirmApplicationUpdate = [System.Windows.Forms.MessageBox]::Show("Updates for Business Central Manager were found. Do you want to download updates now?", "Confirm Application Update", "YesNo", "Question") | Out-Null      
         if ($ConfirmApplicationUpdate -eq "No") {
             return
         }
@@ -54,13 +55,13 @@ function Update-BCManager {
         Write-Host "Updating Business Central Manager application. Please wait...`n" -ForegroundColor Green
 
         # Step 5: Replace files in the running folder
-        Copy-Item "$fullPathToGeneratedFolder\Business-Central-Manager\*" -Destination ($PSScriptRoot | Split-Path) -Recurse -Force -ErrorAction Stop
+        Copy-Item "$fullPathToGeneratedFolder\Business Central Manager\*" -Destination ($PSScriptRoot | Split-Path) -Recurse -Force -ErrorAction Stop
         
         # Step 6: Cleanup - remove temporary files and folders
         Remove-Item -Path $tempZipPath, $tempFolder -Force -Recurse -ErrorAction Stop
 
         Write-Host "Successfuly updated Business Central Manager to version $tempVersion...`n" -ForegroundColor Green
-        [System.Windows.Forms.MessageBox]::Show(("Successfuly updated Business Central Manager to version {0}" -f $tempVersion), "Success", "OK", "Asterisk") | Out-Null
+        [System.Windows.Forms.MessageBox]::Show(("Successfuly updated Business Central Manager to version {0}. Restarting application." -f $tempVersion), "Success", "OK", "Asterisk") | Out-Null
         Restart-BusinessCentralManager
     } else {
         Write-Host "Business Central Manager is up to date.`n"
@@ -75,15 +76,4 @@ function Restart-BusinessCentralManager {
     $batchScriptPath = (($PSScriptRoot | Split-Path) + "\scripts\Autorun.bat")
     Start-Process -FilePath $batchScriptPath
     Exit
-}
-
-$owner = "Uki99"
-$repo = "Business-Central-Manager"
-
-try {
-    Update-BCManager -owner $owner -repo $repo -version 1.0.0.2023090401
-} catch {
-    $errorMessage = $_.ToString()
-    Write-Host "Error occurred during application update:`n$errorMessage`n`nPress any key to continue" -ForegroundColor Red
-    $null = Read-Host
 }
