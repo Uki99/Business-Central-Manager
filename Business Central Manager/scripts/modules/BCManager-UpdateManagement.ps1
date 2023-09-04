@@ -3,7 +3,7 @@
 Set-ExecutionPolicy Unrestricted
 
 # Used to update Business Central Application
-function Update-BCManager {
+function Update-BCManagerApplication {
     param (
         [string] $owner,
         [string] $repo,
