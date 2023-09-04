@@ -209,7 +209,7 @@ function Install-App {
     $TargetAppInfo = Get-NAVAppInfo -Path $Path -ErrorAction Stop
 
     if (-not $SupressGui) {
-        $ConfirmAppInstall = [System.Windows.Forms.MessageBox]::Show(("Do you want to try and install the following app?`n`nName: {0}`nVersion: {1}" -f $TargetAppInfo.Name, $TargetAppInfo.Version), "Confirm App Install", "YesNo", "Question") | Out-Null      
+        $ConfirmAppInstall = [System.Windows.Forms.MessageBox]::Show(("Do you want to try and install the following app?`n`nName: {0}`nVersion: {1}" -f $TargetAppInfo.Name, $TargetAppInfo.Version), "Confirm App Install", "YesNo", "Question")      
         if ($ConfirmAppInstall -eq "No") {
             return
         }
@@ -288,7 +288,7 @@ function Update-App {
     $OldAppInfo = Get-NAVAppInfo -ServerInstance $ServerInstance -Name $TargetAppInfo.Name -Tenant default -TenantSpecificProperties | Where-Object { $_.IsInstalled -eq $true }
 
     if (-not $SupressGui) {
-        $ConfirmAppUpdate = [System.Windows.Forms.MessageBox]::Show(("Do you want to try and update the following app?`n`nName: {0}`nNew Version: {1}`nCurrent Version: {2}" -f $TargetAppInfo.Name, $TargetAppInfo.Version, $OldAppInfo.Version), "Confirm App Update", "YesNo", "Question") | Out-Null       
+        $ConfirmAppUpdate = [System.Windows.Forms.MessageBox]::Show(("Do you want to try and update the following app?`n`nName: {0}`nNew Version: {1}`nCurrent Version: {2}" -f $TargetAppInfo.Name, $TargetAppInfo.Version, $OldAppInfo.Version), "Confirm App Update", "YesNo", "Question")       
         if ($ConfirmAppUpdate -eq "No") {
             return
         }
@@ -665,7 +665,7 @@ $var_MultipleAppPublishingSendAppBtn.Add_Click({
     }
 
 	# Show confirmation message
-    $ConfirmMultipleAppInstall = [System.Windows.Forms.MessageBox]::Show(("Are you sure you want to install the apps located at folder path {0}?`n`nAll apps must be greater in version if such app already exists in any form on target Business Central." -f $var_MultipleAppPublishingAppPathTxt.Text), "Confirm Multiple App Instal", "YesNo", "Question") | Out-Null        
+    $ConfirmMultipleAppInstall = [System.Windows.Forms.MessageBox]::Show(("Are you sure you want to install the apps located at folder path {0}?`n`nAll apps must be greater in version if such app already exists in any form on target Business Central." -f $var_MultipleAppPublishingAppPathTxt.Text), "Confirm Multiple App Instal", "YesNo", "Question")        
     if ($ConfirmMultipleAppInstall -eq "No") {
         return
     }

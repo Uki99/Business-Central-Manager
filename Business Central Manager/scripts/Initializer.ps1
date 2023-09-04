@@ -60,7 +60,7 @@ function Update-BcContainerHelper {
         $newestVersion = Get-Module -ListAvailable -Name BcContainerHelper | Select-Object -ExpandProperty Version | Sort-Object -Descending | Select-Object -First 1
 
         if ($newestVersion -gt $installedModule.Version) {		
-            $ConfirmModuleUpdate = [System.Windows.Forms.MessageBox]::Show("PowerShell module BCContainerHelper found. Do you want to update the module?", "Confirm Module Update", "YesNo", "Question") | Out-Null      
+            $ConfirmModuleUpdate = [System.Windows.Forms.MessageBox]::Show("PowerShell module BCContainerHelper found. Do you want to update the module?", "Confirm Module Update", "YesNo", "Question")      
             if ($ConfirmModuleUpdate -eq "No") {
                 return
             }
