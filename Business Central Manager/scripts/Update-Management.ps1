@@ -18,6 +18,9 @@ function Update-BCManager {
     # Step 3: Download and extract the zipball to a temporary folder
     $tempFolder = Join-Path $env:TEMP "Business-Central-Manager-temp"
     $tempZipPath = Join-Path $env:TEMP "Business-Central-Manager-temp.zip"
+
+    # Cleanup - remove temporary files and folders from before to avoid bugs, if there is any
+    Remove-Item -Path $tempZipPath, $tempFolder -Force -Recurse -ErrorAction SilentlyContinue
     
     # Download the zipball
     Invoke-WebRequest -Uri $zipballUrl -OutFile $tempZipPath -ErrorAction Stop
@@ -34,11 +37,10 @@ function Update-BCManager {
         # Construct the full path to the generated folder
         $fullPathToGeneratedFolder = Join-Path -Path $tempFolder -ChildPath $generatedFolder.Name
     } else {
-        throw "Path could not be resolved while updating Business Central manager."
+        throw "Temp path could not be resolved while updating Business Central manager."
     }
 
-    $tempSettingsJsonPath = Join-Path $fullPathToGeneratedFolder "Business Central Manager\data\settings.json"
-    $tempSettings = Get-Content $tempSettingsJsonPath -Raw | ConvertFrom-Json -ErrorAction Stop
+    $tempSettings = Get-Content (fullPathToGeneratedFolder + "\Business Central Manager\data\settings.json") -Raw | ConvertFrom-Json -ErrorAction Stop
 
     $tempVersion = [version] $tempSettings.settings.ApplicationVersion
     $lcurrentVersion = [version] $version
@@ -58,13 +60,14 @@ function Update-BCManager {
         Remove-Item -Path $tempZipPath, $tempFolder -Force -Recurse -ErrorAction Stop
 
         Write-Host "Successfuly updated Business Central Manager to version $tempVersion...`n" -ForegroundColor Green
-        [System.Windows.Forms.MessageBox]::Show("Application Business Central Manager successfully updated!", "Success", "OK", "Asterisk") | Out-Null
+        [System.Windows.Forms.MessageBox]::Show(("Successfuly updated Business Central Manager to version {0}" -f $tempVersion), "Success", "OK", "Asterisk") | Out-Null
         Restart-BusinessCentralManager
     } else {
         Write-Host "Business Central Manager is up to date.`n"
-        
+        [System.Windows.Forms.MessageBox]::Show("Business Central Manager is up to date.`n", "Success", "OK", "Asterisk") | Out-Null
+
         # Step 7: Cleanup - remove temporary files and folders
-        Remove-Item -Path $tempZipPath, $tempFolder -Force -Recurse -ErrorAction Stop
+        Remove-Item -Path $tempZipPath, $tempFolder -Force -Recurse -ErrorAction StopS
     }
 }
 
@@ -78,7 +81,7 @@ $owner = "Uki99"
 $repo = "Business-Central-Manager"
 
 try {
-    Update-BCManager -owner $owner -repo $repo -version v1.0.2023090301
+    Update-BCManager -owner $owner -repo $repo -version 1.0.0.2023090401
 } catch {
     $errorMessage = $_.ToString()
     Write-Host "Error occurred during application update:`n$errorMessage`n`nPress any key to continue" -ForegroundColor Red
