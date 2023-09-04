@@ -26,10 +26,21 @@ function Update-BCManager {
     Expand-Archive -Path $tempZipPath -DestinationPath $tempFolder -Force -ErrorAction Stop
 
     # Step 4: Check if update is needed
-    $tempSettingsJsonPath = Join-Path $tempFolder "Business-Central-Manager-$($releaseInfo.tag_name)\Business Central Manager\data\settings.json"
+    # Search for the dynamically generated folder name
+    $generatedFolder = Get-ChildItem -Path $tempFolder -Directory | Where-Object { $_.Name -like "$owner-$repo-*" }
+
+    # Check if the folder was found
+    if ($generatedFolder) {
+        # Construct the full path to the generated folder
+        $fullPathToGeneratedFolder = Join-Path -Path $tempFolder -ChildPath $generatedFolder.Name
+    } else {
+        throw "Path could not be resolved while updating Business Central manager."
+    }
+
+    $tempSettingsJsonPath = Join-Path $fullPathToGeneratedFolder "Business Central Manager\data\settings.json"
     $tempSettings = Get-Content $tempSettingsJsonPath -Raw | ConvertFrom-Json -ErrorAction Stop
 
-    $tempVersion = [version] $tempSettings.Version
+    $tempVersion = [version] $tempSettings.settings.ApplicationVersion
     $lcurrentVersion = [version] $version
 
     if ($tempVersion -gt $lcurrentVersion) {
@@ -41,7 +52,7 @@ function Update-BCManager {
         Write-Host "Updating Business Central Manager application. Please wait...`n" -ForegroundColor Green
 
         # Step 5: Replace files in the running folder
-        Copy-Item "$tempFolder\Business-Central-Manager-$($releaseInfo.tag_name)\Business Central Manager\*" -Destination ($PSScriptRoot | Split-Path) -Recurse -Force -ErrorAction Stop
+        Copy-Item "$fullPathToGeneratedFolder\Business-Central-Manager\*" -Destination ($PSScriptRoot | Split-Path) -Recurse -Force -ErrorAction Stop
         
         # Step 6: Cleanup - remove temporary files and folders
         Remove-Item -Path $tempZipPath, $tempFolder -Force -Recurse -ErrorAction Stop
@@ -61,4 +72,15 @@ function Restart-BusinessCentralManager {
     $batchScriptPath = (($PSScriptRoot | Split-Path) + "\scripts\Autorun.bat")
     Start-Process -FilePath $batchScriptPath
     Exit
+}
+
+$owner = "Uki99"
+$repo = "Business-Central-Manager"
+
+try {
+    Update-BCManager -owner $owner -repo $repo -version v1.0.2023090301
+} catch {
+    $errorMessage = $_.ToString()
+    Write-Host "Error occurred during application update:`n$errorMessage`n`nPress any key to continue" -ForegroundColor Red
+    $null = Read-Host
 }
