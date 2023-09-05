@@ -61,6 +61,14 @@ try {
     Exit
 }
 
+# Set main window icon
+$IconPath = (($PSScriptRoot | Split-Path) + "\data\mainIcon.ico")
+$Icon = [System.Windows.Media.Imaging.BitmapImage]::new()
+$Icon.BeginInit()
+$Icon.UriSource = [System.Uri]::new($IconPath, [System.UriKind]::Relative)
+$Icon.EndInit()
+$Window.Icon = $Icon
+
 # Set control variables for GUI
 $MainWindowXAML.SelectNodes("//*[@Name]") | ForEach-Object {
     try {

@@ -10,7 +10,7 @@ Import-Module -Force (($PSScriptRoot | Split-Path) + "\scripts\modules\BCContain
 
 Add-Type -AssemblyName System.Windows.Forms
 
-# Load settings from json
+# Load settings from settings.json
 try {
     $settings = Get-Content (($PSScriptRoot | Split-Path) + "\data\settings.json") -Raw | ConvertFrom-Json -ErrorAction Stop
 }
@@ -27,7 +27,7 @@ catch {
                                                                                   ### Function Section ###
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
-# Used to check and update application
+# Used to check and update main application
 function Update-BCManager {
     if (-not $settings.settings.CheckForApplicationUpdateOnStart) {
         return
@@ -75,5 +75,6 @@ function Update-BcContainerHelper {
 Write-Host "Running initializer...`n`n" -ForegroundColor Green
 Update-BCManager
 Update-BcContainerHelper
+Write-Host "Initializer finishing...`n`n" -ForegroundColor Green
 
 Exit 0

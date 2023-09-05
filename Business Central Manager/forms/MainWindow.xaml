@@ -11,6 +11,10 @@
         ResizeMode="NoResize"
         FontFamily="Segoe UI">
 
+    <!-- Specify the icon using a relative path -->
+    <Window.Icon>
+        <BitmapImage UriSource="..\data\mainIcon.ico" />
+    </Window.Icon>
 
     <!-- Body 2x2 -->
     <Grid Background="Navy">
