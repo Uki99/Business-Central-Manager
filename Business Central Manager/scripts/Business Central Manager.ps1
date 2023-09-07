@@ -476,7 +476,7 @@ function Load-DisplaySettings {
     
     try {
         # Get variable in XAML that corresponds to the JSON key in settings.json
-        $control = (Get-Variable -Name "var_$JsonKey").Value
+        $control = (Get-Variable -Name "var_$JsonKey" -ErrorAction SilentlyContinue).Value
 
         if ($control -is [System.Windows.Controls.TextBox]) {
             $control.Text = $Value
@@ -590,6 +590,9 @@ $window.Add_Loaded({
         $value = $key.Value
         Load-DisplaySettings -JsonKey $controlName -Value $value
     }
+
+    # Load information in About tab
+    $var_AboutTabDisplayVersionTxt.Text = $settings.settings.ApplicationVersion
 })
 
 
@@ -862,6 +865,33 @@ $var_SettingsSaveBtn.Add_Click({
     Restart-BusinessCentralManager
 })
 
+
+# ------------------------------ #
+###        ABOUT TOPIC        ###
+# ------------------------------ #
+
+$var_CheckForUpdatesBtn.Add_Click({
+    Import-Module -Force (($PSScriptRoot | Split-Path) + "\scripts\modules\BCManager-UpdateManagement.ps1")
+
+    $owner = "Uki99"
+    $repo = "Business-Central-Manager"
+    
+    try {
+        Update-BCManagerApplication -owner $owner -repo $repo -currentVersion $settings.settings.ApplicationVersion -upToDateMessage $true
+    } catch {
+        $errorMessage = $_.ToString()
+        [System.Windows.Forms.MessageBox]::Show($errorMessage, "Error", "OK", "Error")
+        Exit
+    }
+})
+
+$var_GitHubLink.Add_Click({
+    # Get the URL from the NavigateUri property of the Hyperlink control
+    $url = $var_GitHubLink.NavigateUri.AbsoluteUri
+
+    # Open the URL in the default web browser
+    Start-Process $url
+})
 
 
 $Null = $window.ShowDialog()

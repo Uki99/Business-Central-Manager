@@ -58,9 +58,23 @@ function Update-BCManagerApplication {
 
         # Step 5: Replace files in the running folder
         $applicationRootLocation = ($PSScriptRoot | Split-Path | Split-Path)
+        $oldSettings = Get-Content ($applicationRootLocation + '\data\settings.json') -Raw | ConvertFrom-Json -ErrorAction Stop
         Copy-Item "$fullPathToGeneratedFolder\Business Central Manager\*" -Destination $applicationRootLocation -Recurse -Force -ErrorAction Stop
+
+        # Step 6: Return old user settings
+        $tempSettings.settings.HidePowerShellConsole = $oldSettings.settings.HidePowerShellConsole
+        $tempSettings.settings.NavAdminTool = $oldSettings.settings.NavAdminTool
+        $tempSettings.settings.MainWindowXAMLRelativePath = $oldSettings.settings.MainWindowXAMLRelativePath
+        $tempSettings.settings.SupportedBusinessCentralVersion = $oldSettings.settings.SupportedBusinessCentralVersion
+        $tempSettings.settings.UnpublishLastInstalledAppDuringUpgrade = $oldSettings.settings.UnpublishLastInstalledAppDuringUpgrade
+        $tempSettings.settings.SearchForUpdateBcContainerHelper = $oldSettings.settings.SearchForUpdateBcContainerHelper
+        $tempSettings.settings.DelayBcContainerHelperModuleImport = $oldSettings.settings.DelayBcContainerHelperModuleImport
+        $tempSettings.settings.CheckForApplicationUpdateOnStart = $oldSettings.settings.CheckForApplicationUpdateOnStart
+
+        # Save the updated settings.json file
+        $tempSettings | ConvertTo-Json | Set-Content -Path ($applicationRootLocation | Join-Path -ChildPath "data\settings.json") -Force
         
-        # Step 6: Cleanup - remove temporary files and folders
+        # Step 7: Cleanup - remove temporary files and folders
         Remove-Item -Path $tempZipPath, $tempFolder -Force -Recurse -ErrorAction Stop
 
         Write-Host "Successfuly updated Business Central Manager to version $tempVersion. Restarting application.`n" -ForegroundColor Green
@@ -73,7 +87,7 @@ function Update-BCManagerApplication {
             [System.Windows.Forms.MessageBox]::Show("Business Central Manager is already up to date.`n", "Success", "OK", "Asterisk") | Out-Null
         }
 
-        # Step 7: Cleanup - remove temporary files and folders
+        # Step 8: Cleanup - remove temporary files and folders
         Remove-Item -Path $tempZipPath, $tempFolder -Force -Recurse -ErrorAction Stop
     }
 }
