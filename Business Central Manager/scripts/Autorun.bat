@@ -15,8 +15,8 @@ for /f %%a in ('powershell -command "(Get-Content \"%jsonFile%\" | ConvertFrom-J
 :: Run PowerShell as administrator with the appropriate window style
 if "%HidePowerShellConsole%"=="True" (
     :: Run PowerShell script in hidden mode with admin privileges
-    powershell -ExecutionPolicy Unrestricted -WindowStyle Hidden -NoProfile -File "%scriptDir%BE-terna Business Central Manager.ps1" %*
+    powershell -ExecutionPolicy Unrestricted -WindowStyle Hidden -NoProfile -File "%scriptDir%Business Central Manager.ps1" %*
 ) else (
     :: Run PowerShell script in windowed mode with admin privileges
-    powershell -ExecutionPolicy Unrestricted -WindowStyle Normal -NoProfile -File "%scriptDir%BE-terna Business Central Manager.ps1" %*
+    powershell -ExecutionPolicy Unrestricted -WindowStyle Normal -NoProfile -File "%scriptDir%Business Central Manager.ps1" %*
 )
