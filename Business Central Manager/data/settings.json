@@ -1,6 +1,6 @@
 {
     "settings":  {
-                     "ApplicationVersion":  "1.0.0.2023091104",
+                     "ApplicationVersion":  "1.0.0.2023091105",
                      "HidePowerShellConsole":  true,
                      "NavAdminTool":  "C:\\Program Files\\Microsoft Dynamics 365 Business Central\\220\\Service\\NavAdminTool.ps1",
                      "MainWindowXAMLRelativePath":  "\\forms\\MainWindow.xaml",
