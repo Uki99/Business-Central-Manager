@@ -1,6 +1,8 @@
 # Management script container that has functionality for application update #
 
 Set-ExecutionPolicy Unrestricted
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
 
 # Used to update Business Central Application
 function Update-BCManagerApplication {

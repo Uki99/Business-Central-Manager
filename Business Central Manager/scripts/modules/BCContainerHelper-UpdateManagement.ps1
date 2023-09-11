@@ -1,6 +1,8 @@
 # Management script container that has functionality for BC Container Helper module update #
 
 Set-ExecutionPolicy Unrestricted
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
 
 # Used to check for updates or install the BCContainerHelper module
 function Update-BCContainerHelperModule {
