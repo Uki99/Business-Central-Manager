@@ -64,6 +64,11 @@ function Update-BCManagerApplication {
         # Close window if asked to avoid concurent file use
         if ($closeWindow) {
             $window.Close()
+
+            # Close any open handles or references to the icon file
+            $IconPath = (($PSScriptRoot | Split-Path | Split-Path) + "\data\mainIcon.ico")
+            $iconStream = [System.IO.File]::Open($IconPath, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+            $iconStream.Close()
         }
 
         # Step 5: Replace files in the running folder
