@@ -13,7 +13,8 @@ function Update-BCManagerApplication {
         [Parameter(Mandatory = $true)] [string] $currentVersion,
         [boolean] $upToDateMessage,
         [System.Windows.Window]$window,
-        [boolean] $closeWindow
+        [boolean] $closeWindow,
+        [System.Windows.Media.Imaging.BitmapImage]$Icon
     )
 
     # Step 1: Send a request to get the latest release information from GitHub
@@ -63,6 +64,7 @@ function Update-BCManagerApplication {
 
         # Close window if asked to avoid concurent file use
         if ($closeWindow) {
+            $Icon.Dispose()
             $window.Close()
         }
 
