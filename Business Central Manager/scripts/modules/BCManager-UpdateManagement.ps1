@@ -5,10 +5,12 @@ Set-ExecutionPolicy Unrestricted
 # Used to update Business Central Application
 function Update-BCManagerApplication {
     param (
-        [string] $owner,
-        [string] $repo,
-        [string] $currentVersion,
-        [boolean] $upToDateMessage
+        [Parameter(Mandatory = $true)] [string] $owner,
+        [Parameter(Mandatory = $true)] [string] $repo,
+        [Parameter(Mandatory = $true)] [string] $currentVersion,
+        [boolean] $upToDateMessage,
+        [System.Windows.Window]$window,
+        [boolean] $closeWindow
     )
 
     # Step 1: Send a request to get the latest release information from GitHub
@@ -55,6 +57,11 @@ function Update-BCManagerApplication {
         }
 
         Write-Host "Updating Business Central Manager application. Please wait...`n"
+
+        # Close window if asked to avoid concurent file use
+        if ($closeWindow) {
+            $window.Close()
+        }
 
         # Step 5: Replace files in the running folder
         $applicationRootLocation = ($PSScriptRoot | Split-Path | Split-Path)

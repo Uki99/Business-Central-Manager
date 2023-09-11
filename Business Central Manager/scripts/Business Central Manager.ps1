@@ -877,7 +877,7 @@ $var_CheckForUpdatesBtn.Add_Click({
     $repo = "Business-Central-Manager"
     
     try {
-        Update-BCManagerApplication -owner $owner -repo $repo -currentVersion $settings.settings.ApplicationVersion -upToDateMessage $true
+        Update-BCManagerApplication -owner $owner -repo $repo -currentVersion $settings.settings.ApplicationVersion -upToDateMessage $true -window $window -closeWindow $true
     } catch {
         $errorMessage = $_.ToString()
         [System.Windows.Forms.MessageBox]::Show($errorMessage, "Error", "OK", "Error")
