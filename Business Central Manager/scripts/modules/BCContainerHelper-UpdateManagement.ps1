@@ -3,6 +3,7 @@
 Set-ExecutionPolicy Unrestricted
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
+Add-Type -AssemblyName PresentationFramework
 
 # Used to check for updates or install the BCContainerHelper module
 function Update-BCContainerHelperModule {

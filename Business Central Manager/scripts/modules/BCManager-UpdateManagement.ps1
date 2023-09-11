@@ -3,6 +3,7 @@
 Set-ExecutionPolicy Unrestricted
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
+Add-Type -AssemblyName PresentationFramework
 
 # Used to update Business Central Application
 function Update-BCManagerApplication {
