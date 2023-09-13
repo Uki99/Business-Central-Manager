@@ -40,7 +40,7 @@ function Update-BCManager {
     $exitCode = 0
     
     try {
-        Update-BCManagerApplication -owner $owner -repo $repo -currentVersion $settings.settings.ApplicationVersion -upToDateMessage $false -$exitCode $exitCode
+        Update-BCManagerApplication -owner $owner -repo $repo -currentVersion $settings.settings.ApplicationVersion -upToDateMessage $false -exitCode $exitCode
 
         if ($exitCode = 200) {
             Exit 200
