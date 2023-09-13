@@ -63,10 +63,27 @@ try {
 
 # Set main window icon
 $IconPath = (($PSScriptRoot | Split-Path) + "\data\mainIcon.ico")
+
+# Create a FileStream to read the icon file
+$FileStream = [System.IO.File]::Open($IconPath, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+
+# Create a MemoryStream to hold the icon data
+$MemoryStream = [System.IO.MemoryStream]::new()
+
+# Copy the icon data from the FileStream to the MemoryStream
+$FileStream.CopyTo($MemoryStream)
+
+# Close the FileStream
+$FileStream.Close()
+
+# Create a BitmapImage and set its source to the MemoryStream
 $Icon = [System.Windows.Media.Imaging.BitmapImage]::new()
 $Icon.BeginInit()
-$Icon.UriSource = [System.Uri]::new($IconPath, [System.UriKind]::Relative)
+$Icon.StreamSource = $MemoryStream
+$Icon.CacheOption = [System.Windows.Media.Imaging.BitmapCacheOption]::OnLoad
 $Icon.EndInit()
+
+# Set the window's icon
 $Window.Icon = $Icon
 
 # Set control variables for GUI
