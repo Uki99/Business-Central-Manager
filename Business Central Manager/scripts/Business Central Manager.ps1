@@ -100,7 +100,7 @@ $MainWindowXAML.SelectNodes("//*[@Name]") | ForEach-Object {
 
 # Start Initializer.ps1
 $scriptPath = ($PSScriptRoot + "\Initializer.ps1")
-$Initializer = Start-Process -FilePath PowerShell.exe -Verb Runas -ArgumentList "-File `"$($scriptPath)`"" -Wait | Wait-Process
+$Initializer = Start-Process -FilePath PowerShell.exe -Verb Runas -ArgumentList "-File `"$($scriptPath)`"" -Wait -PassThru | Wait-Process
 
 if ($Initializer.ExitCode -eq 200) {
     Exit
