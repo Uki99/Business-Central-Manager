@@ -20,6 +20,7 @@ Add-Type -AssemblyName PresentationFramework
 $scriptPath = ($PSScriptRoot + "\Initializer.ps1")
 $Initializer = Start-Process -FilePath PowerShell.exe -Verb Runas -ArgumentList "-File `"$($scriptPath)`"" -Wait -PassThru
 
+# Code 200 is a custom exit code that indicates update has happened, the app has been restarted so the initial parent process can close
 if ($Initializer.ExitCode -eq 200) {
     Exit
 }
