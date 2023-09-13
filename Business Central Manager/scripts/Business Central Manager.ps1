@@ -18,8 +18,11 @@ Add-Type -AssemblyName PresentationFramework
 
 # Start Initializer.ps1
 $scriptPath = ($PSScriptRoot + "\Initializer.ps1")
-$process = Start-Process -FilePath PowerShell.exe -Verb Runas -ArgumentList "-File `"$($scriptPath)`"" -Wait -PassThru
+$Initializer = Start-Process -FilePath PowerShell.exe -Verb Runas -ArgumentList "-File `"$($scriptPath)`"" -Wait -PassThru
 
+if ($Initializer.ExitCode = 200) {
+    Exit
+}
 
 # Load settings from json
 try {
