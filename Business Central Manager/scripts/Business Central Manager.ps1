@@ -20,7 +20,7 @@ Add-Type -AssemblyName PresentationFramework
 $scriptPath = ($PSScriptRoot + "\Initializer.ps1")
 $Initializer = Start-Process -FilePath PowerShell.exe -Verb Runas -ArgumentList "-File `"$($scriptPath)`"" -Wait -PassThru
 
-if ($Initializer.ExitCode = 200) {
+if ($Initializer.ExitCode -eq 200) {
     Exit
 }
 
