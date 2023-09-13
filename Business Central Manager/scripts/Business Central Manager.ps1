@@ -9,12 +9,24 @@ if(!([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]:
     Exit
 }
 
-
 # Set execution policy and import required assemblies
 Set-ExecutionPolicy Unrestricted
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName PresentationFramework
+
+
+
+# Start Initializer.ps1
+$scriptPath = ($PSScriptRoot + "\Initializer.ps1")
+Start-Process -FilePath PowerShell.exe -Verb Runas -ArgumentList "-File `"$($scriptPath)`"" -Wait
+
+# Get the exit code of the previous PowerShell process
+$exitCode = $LASTEXITCODE
+
+if ($exitCode -eq 200) {
+    Exit
+}
 
 
 # Load settings from json
@@ -95,17 +107,6 @@ $MainWindowXAML.SelectNodes("//*[@Name]") | ForEach-Object {
         [System.Windows.Forms.MessageBox]::Show($errorMessage, "Error", "OK", "Error")
         Exit
     }
-}
-
-# Start Initializer.ps1
-$scriptPath = ($PSScriptRoot + "\Initializer.ps1")
-Start-Process -FilePath PowerShell.exe -Verb Runas -ArgumentList "-File `"$($scriptPath)`"" -Wait
-
-# Get the exit code of the previous PowerShell process
-$exitCode = $LASTEXITCODE
-
-if ($exitCode -eq 200) {
-    Exit
 }
 
 # Import BCContainerHelper module

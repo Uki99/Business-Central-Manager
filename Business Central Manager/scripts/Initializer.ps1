@@ -37,9 +37,14 @@ function Update-BCManager {
     
     $owner = "Uki99"
     $repo = "Business-Central-Manager"
+    $exitCode = 0
     
     try {
-        Update-BCManagerApplication -owner $owner -repo $repo -currentVersion $settings.settings.ApplicationVersion -upToDateMessage $false
+        Update-BCManagerApplication -owner $owner -repo $repo -currentVersion $settings.settings.ApplicationVersion -upToDateMessage $false -$exitCode $exitCode
+
+        if ($exitCode = 200) {
+            Exit 200
+        }
     } catch {
         $errorMessage = $_.ToString()
         Write-Host "Error occurred during application update:`n$errorMessage`n`nPress any key to continue" -ForegroundColor Red
