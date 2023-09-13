@@ -12,8 +12,6 @@ function Update-BCManagerApplication {
         [Parameter(Mandatory = $true)] [string] $repo,
         [Parameter(Mandatory = $true)] [string] $currentVersion,
         [boolean] $upToDateMessage,
-        [System.Windows.Window]$window,
-        [boolean] $closeWindow
     )
 
     # Step 1: Send a request to get the latest release information from GitHub
@@ -60,16 +58,6 @@ function Update-BCManagerApplication {
         }
 
         Write-Host "Updating Business Central Manager application. Please wait...`n"
-
-        # Close window if asked to avoid concurent file use
-        if ($closeWindow) {
-            $window.Close()
-
-            # Close any open handles or references to the icon file
-            $IconPath = (($PSScriptRoot | Split-Path | Split-Path) + "\data\mainIcon.ico")
-            $iconStream = [System.IO.File]::Open($IconPath, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
-            $iconStream.Close()
-        }
 
         # Step 5: Replace files in the running folder
         $applicationRootLocation = ($PSScriptRoot | Split-Path | Split-Path)
