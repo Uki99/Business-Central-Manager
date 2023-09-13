@@ -98,5 +98,5 @@ function Update-BCManagerApplication {
 function Restart-BusinessCentralManager {
     $batchScriptPath = (($PSScriptRoot | Split-Path | Split-Path) + "\scripts\Autorun.bat")
     Start-Process -FilePath $batchScriptPath
-    Exit
+    Exit 200
 }
