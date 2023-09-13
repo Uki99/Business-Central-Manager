@@ -11,8 +11,7 @@ function Update-BCManagerApplication {
         [Parameter(Mandatory = $true)] [string] $owner,
         [Parameter(Mandatory = $true)] [string] $repo,
         [Parameter(Mandatory = $true)] [string] $currentVersion,
-        [boolean] $upToDateMessage,
-        [int] $exitCode
+        [boolean] $upToDateMessage
     )
 
     # Step 1: Send a request to get the latest release information from GitHub
@@ -84,8 +83,8 @@ function Update-BCManagerApplication {
         Write-Host "Successfuly updated Business Central Manager to version $tempVersion. Restarting application.`n" -ForegroundColor Green
         [System.Windows.Forms.MessageBox]::Show(("Successfuly updated Business Central Manager to the version {0}. Restarting application." -f $tempVersion), "Success", "OK", "Asterisk") | Out-Null
 
-        $exitCode = 200
         Restart-BusinessCentralManager
+        Exit 200
     } else {
         Write-Host "Business Central Manager is up to date.`n"
         if ($upToDateMessage) {

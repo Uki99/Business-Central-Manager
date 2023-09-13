@@ -16,17 +16,9 @@ Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName PresentationFramework
 
 
-
 # Start Initializer.ps1
 $scriptPath = ($PSScriptRoot + "\Initializer.ps1")
-Start-Process -FilePath PowerShell.exe -Verb Runas -ArgumentList "-File `"$($scriptPath)`"" -Wait
-
-# Get the exit code of the previous PowerShell process
-$exitCode = $LASTEXITCODE
-
-if ($exitCode -eq 200) {
-    Exit
-}
+$process = Start-Process -FilePath PowerShell.exe -Verb Runas -ArgumentList "-File `"$($scriptPath)`"" -Wait -PassThru
 
 
 # Load settings from json
