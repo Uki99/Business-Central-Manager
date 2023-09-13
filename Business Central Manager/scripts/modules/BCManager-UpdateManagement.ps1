@@ -11,7 +11,7 @@ function Update-BCManagerApplication {
         [Parameter(Mandatory = $true)] [string] $owner,
         [Parameter(Mandatory = $true)] [string] $repo,
         [Parameter(Mandatory = $true)] [string] $currentVersion,
-        [boolean] $upToDateMessage,
+        [boolean] $upToDateMessage
     )
 
     # Step 1: Send a request to get the latest release information from GitHub
