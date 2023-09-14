@@ -10,6 +10,8 @@ Download the latest release from [releases](https://github.com/Uki99/Business-Ce
 
 A detailed manual is provided at the [following]() link.
 
+![Business Central Manager](https://prnt.sc/FwHUFT2zEhIb)
+
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first
