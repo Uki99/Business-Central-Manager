@@ -8,7 +8,7 @@ Download the latest release from [releases](https://github.com/Uki99/Business-Ce
 
 ## Usage
 
-A detailed manual is provided at the [following]() link.
+A detailed manual is provided at the [following](Business Central Manager/data/Business Central Manager - Manual.pdf) link.
 
 ![Business Central Manager](https://img001.prntscr.com/file/img001/mOYuhPelScqMCSQd0sQkBQ.png)
 
