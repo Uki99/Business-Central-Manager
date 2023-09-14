@@ -913,5 +913,13 @@ $var_GitHubLink.Add_Click({
     Start-Process $url
 })
 
+$var_ShowDocumentationBtn.Add_Click({
+    # Get the path to the manual
+    $url = (($PSScriptRoot | Split-Path) + "\data\Business Central Manager - Manual.pdf")
+
+    # Open the URL in the default web browser
+    Start-Process $url
+})
+
 
 $Null = $window.ShowDialog()
