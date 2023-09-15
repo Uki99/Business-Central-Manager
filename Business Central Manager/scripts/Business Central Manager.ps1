@@ -815,19 +815,20 @@ $var_MultipleAppPublishingSendAppBtn.Add_Click({
         
         if ($HasError) {
             $AppInstallInfo = [PSCustomObject] @{
-            AppName = "$($AppInfo.Name)"
-            AppVersion = "$($AppInfo.Version)"
-            Status = "❌"
+                AppName = "$($AppInfo.Name)"
+                AppVersion = "$($AppInfo.Version)"
+                Status = "❌"
+            }
         } else {
             $AppInstallInfo = [PSCustomObject] @{
-            AppName = "$($AppInfo.Name)"
-            AppVersion = "$($AppInfo.Version)"
-            Status = "✔️"
+                AppName = "$($AppInfo.Name)"
+                AppVersion = "$($AppInfo.Version)"
+                Status = "✔️"
+            }
         }
 
         $var_MultipleAppPublishingAppStatusList.Items.Add($AppInstallInfo)
     }
-    	
     	 
     # Update Progress bar
 	UpdateUIElement -Element $var_MultipleAppPublishingProgressInfoTxt -Property "Text" -Value "Finalizing"
