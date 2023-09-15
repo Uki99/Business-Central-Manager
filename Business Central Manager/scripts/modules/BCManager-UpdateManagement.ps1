@@ -60,7 +60,7 @@ function Update-BCManagerApplication {
         Write-Host "Updating Business Central Manager application. Please wait...`n"
 
         # Step 5: Replace files in the running folder
-        $applicationRootLocation = ($PSScriptRoot | Split-Path| | Split-Path | | Split-Path)
+        $applicationRootLocation = ($PSScriptRoot | Split-Path| Split-Path | Split-Path)
         $oldSettings = Get-Content ($applicationRootLocation + '\Business Central Manager\data\settings.json') -Raw | ConvertFrom-Json -ErrorAction Stop
         Copy-Item "$fullPathToGeneratedFolder\*" -Destination $applicationRootLocation -Recurse -Force -ErrorAction Stop
 
