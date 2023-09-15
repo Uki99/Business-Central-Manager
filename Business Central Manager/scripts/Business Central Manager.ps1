@@ -383,11 +383,11 @@ function Process-App {
         [Parameter(Mandatory = $true)] [string]$AppPath,
         [Parameter(Mandatory = $true)] [string]$ServerInstance,
         [Parameter(Mandatory = $true)] [Microsoft.Dynamics.Nav.Types.NavAppSyncMode]$SyncMode,
-        [Parameter(Mandatory = $false)] [boolean] $SupressGui = $false,
-        [Parameter(Mandatory = $false)] [System.Windows.Controls.StackPanel] $ProgressBarContainer,
-        [Parameter(Mandatory = $false)] [System.Windows.Controls.ProgressBar] $ProgressBar,
-        [Parameter(Mandatory = $false)] [System.Windows.Controls.TextBlock] $ProgressInfo,
-        [Parameter(Mandatory = $false)] [ref] [bool] $HasError
+        [Parameter(Mandatory = $false)] [boolean]$SupressGui = $false,
+        [Parameter(Mandatory = $false)] [System.Windows.Controls.StackPanel]$ProgressBarContainer,
+        [Parameter(Mandatory = $false)] [System.Windows.Controls.ProgressBar]$ProgressBar,
+        [Parameter(Mandatory = $false)] [System.Windows.Controls.TextBlock]$ProgressInfo,
+        [Parameter(Mandatory = $false)] [ref][bool]$HasError
     )
 
 	$RequestedAppInformation = Get-NAVAppInfo -Path $AppPath
@@ -413,6 +413,7 @@ function Process-App {
             if ($PSBoundParameters.ContainsKey('HasError')) {
                 $HasError = $true
             }
+
             return
         }
 
@@ -822,7 +823,7 @@ $var_MultipleAppPublishingSendAppBtn.Add_Click({
         Process-App -AppPath $App `
                     -ServerInstance $var_MultipleAppPublishingServerInstanceComboBox.SelectedValue `
                     -SyncMode $SyncMode `
-                    -SupressGui $true
+                    -SupressGui $true `
                     -HasError $HasError
         
         if ($HasError) {
