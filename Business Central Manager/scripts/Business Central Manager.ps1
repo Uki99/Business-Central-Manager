@@ -824,7 +824,7 @@ $var_MultipleAppPublishingSendAppBtn.Add_Click({
                     -ServerInstance $var_MultipleAppPublishingServerInstanceComboBox.SelectedValue `
                     -SyncMode $SyncMode `
                     -SupressGui $true `
-                    -HasError $HasError
+                    -HasError ([ref]$HasError)
         
         if ($HasError) {
             $AppInstallInfo = [PSCustomObject] @{
