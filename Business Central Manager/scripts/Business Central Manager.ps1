@@ -834,7 +834,7 @@ $var_MultipleAppPublishingSendAppBtn.Add_Click({
 	UpdateUIElement -Element $var_MultipleAppPublishingProgressInfoTxt -Property "Text" -Value "Finalizing"
 	UpdateUIElement -Element $var_MultipleAppPublishingProgressBar -Property "Value" -Value ($var_MultipleAppPublishingProgressBar.Value + 100)
 
-	[System.Windows.Forms.MessageBox]::Show("Successfully installed all apps!", "Succcess", "OK", "Asterisk") | Out-Null
+	[System.Windows.Forms.MessageBox]::Show("Successfully finished processing of all apps!", "Succcess", "OK", "Asterisk") | Out-Null
 
 	# Update Progress bar
 	UpdateUIElement -Element $var_MultipleAppPublishingProgress -Property "IsEnabled" -Value $false
