@@ -15,7 +15,7 @@ A detailed manual is provided at the [following](https://github.com/Uki99/Busine
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first
-to discuss what you would like to change.
+to discuss what you would like to change. Please, document all changes accordingly.
 
 ## License
 
