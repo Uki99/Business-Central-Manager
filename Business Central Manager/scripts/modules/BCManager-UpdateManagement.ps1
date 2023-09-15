@@ -60,8 +60,8 @@ function Update-BCManagerApplication {
         Write-Host "Updating Business Central Manager application. Please wait...`n"
 
         # Step 5: Replace files in the running folder
-        $applicationRootLocation = ($PSScriptRoot | Split-Path)
-        $oldSettings = Get-Content ($applicationRootLocation + '\data\settings.json') -Raw | ConvertFrom-Json -ErrorAction Stop
+        $applicationRootLocation = ($PSScriptRoot | Split-Path| | Split-Path | | Split-Path)
+        $oldSettings = Get-Content ($applicationRootLocation + '\Business Central Manager\data\settings.json') -Raw | ConvertFrom-Json -ErrorAction Stop
         Copy-Item "$fullPathToGeneratedFolder\*" -Destination $applicationRootLocation -Recurse -Force -ErrorAction Stop
 
         # Step 6: Return old user settings
@@ -75,7 +75,7 @@ function Update-BCManagerApplication {
         $tempSettings.settings.CheckForApplicationUpdateOnStart = $oldSettings.settings.CheckForApplicationUpdateOnStart
 
         # Save the updated settings.json file
-        $tempSettings | ConvertTo-Json | Set-Content -Path (($applicationRootLocation | Split-Path) | Join-Path -ChildPath "data\settings.json") -Force
+        $tempSettings | ConvertTo-Json | Set-Content -Path (($applicationRootLocation + "\Business Central Manager") | Join-Path -ChildPath "data\settings.json") -Force
         
         # Step 7: Cleanup - remove temporary files and folders
         Remove-Item -Path $tempZipPath, $tempFolder -Force -Recurse -ErrorAction Stop
