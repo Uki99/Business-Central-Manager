@@ -429,6 +429,9 @@ function Process-App {
         if ($ShouldHandleProgressBar) {
             try {
                 Update-App -Path $AppPath -ServerInstance $ServerInstance -SyncMode $SyncMode -ProgressBarContainer $ProgressBarContainer -ProgressBar $ProgressBar -ProgressInfo $ProgressInfo -SupressGui $SupressGui
+                if ($PSBoundParameters.ContainsKey('HasError')) {
+                    $HasError = $false
+                }
                 return     
             }
             catch {
@@ -449,6 +452,9 @@ function Process-App {
         } else {
             try {
                 Update-App -Path $AppPath -ServerInstance $ServerInstance -SyncMode $SyncMode -SupressGui $SupressGui
+                if ($PSBoundParameters.ContainsKey('HasError')) {
+                   $HasError = $false
+                }
                 return     
             }
             catch {
@@ -490,6 +496,9 @@ function Process-App {
         if ($ShouldHandleProgressBar) {
             try {
                 Install-App -Path $AppPath -ServerInstance $ServerInstance -SyncMode $SyncMode -ProgressBarContainer $ProgressBarContainer -ProgressBar $ProgressBar -ProgressInfo $ProgressInfo -SupressGui $SupressGui
+                if ($PSBoundParameters.ContainsKey('HasError')) {
+                   $HasError = $false
+                }
             }
             catch {
                 $errorMessage = $_.ToString()
@@ -509,6 +518,9 @@ function Process-App {
         } else {
             try {
                 Install-App -Path $AppPath -ServerInstance $ServerInstance -SyncMode $SyncMode -SupressGui $SupressGui
+                if ($PSBoundParameters.ContainsKey('HasError')) {
+                   $HasError = $false
+                }
             }
             catch {
                 $errorMessage = $_.ToString()
