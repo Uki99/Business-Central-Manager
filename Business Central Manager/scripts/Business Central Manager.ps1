@@ -386,8 +386,7 @@ function Process-App {
         [Parameter(Mandatory = $false)] [boolean]$SupressGui = $false,
         [Parameter(Mandatory = $false)] [System.Windows.Controls.StackPanel]$ProgressBarContainer,
         [Parameter(Mandatory = $false)] [System.Windows.Controls.ProgressBar]$ProgressBar,
-        [Parameter(Mandatory = $false)] [System.Windows.Controls.TextBlock]$ProgressInfo,
-        [Parameter(Mandatory = $false)] [ref][bool]$HasError
+        [Parameter(Mandatory = $false)] [System.Windows.Controls.TextBlock]$ProgressInfo
     )
 
 	$RequestedAppInformation = Get-NAVAppInfo -Path $AppPath
@@ -408,32 +407,20 @@ function Process-App {
     <# Requested app is already installed under any version #>
     if ($IsRequestedAppInstalled) {
         if ($NewerVersionExists) {
-            [System.Windows.Forms.MessageBox]::Show(("The requested app {0} has a newer version already published or installed.`n`nVisit page `"Extension Management`" and install it from there if it is not yet installed.`n`nNo action has been performed." -f $RequestedAppInformation.Name), "Newer App Available", "OK", "Error") | Out-Null                 
-            
-            if ($PSBoundParameters.ContainsKey('HasError')) {
-                $HasError = $true
-            }
-
-            return
+            [System.Windows.Forms.MessageBox]::Show(("The requested app {0} has a newer version already published or installed.`n`nVisit page `"Extension Management`" and install it from there if it is not yet installed.`n`nNo action has been performed." -f $RequestedAppInformation.Name), "Newer App Available", "OK", "Error") | Out-Null
+            return $true
         }
 
         if ($SameVersionExists) {
             [System.Windows.Forms.MessageBox]::Show(("The requested app {0} has the same version {1} already published or installed.`n`nVisit page `"Extension Management`" and install it from there if it is not yet installed.`n`nNo action has been performed." -f $RequestedAppInformation.Name, $RequestedAppInformation.Version), "App Already Available", "OK", "Information") | Out-Null              
-            
-            if ($PSBoundParameters.ContainsKey('HasError')) {
-                $HasError = $false
-            }
-            return
+            return $true
         }
         
 
         if ($ShouldHandleProgressBar) {
             try {
                 Update-App -Path $AppPath -ServerInstance $ServerInstance -SyncMode $SyncMode -ProgressBarContainer $ProgressBarContainer -ProgressBar $ProgressBar -ProgressInfo $ProgressInfo -SupressGui $SupressGui
-                if ($PSBoundParameters.ContainsKey('HasError')) {
-                    $HasError = $false
-                }
-                return     
+                return $false     
             }
             catch {
                 $errorMessage = $_.ToString()
@@ -444,29 +431,17 @@ function Process-App {
                 UpdateUIElement -Element $ProgressInfo -Property "Text" -Value ""
                 UpdateUIElement -Element $ProgressBar -Property "Value" -Value 0
 
-                if ($PSBoundParameters.ContainsKey('HasError')) {
-                    $HasError = $true
-                }
-
-                return
+                return $true
             }
         } else {
             try {
                 Update-App -Path $AppPath -ServerInstance $ServerInstance -SyncMode $SyncMode -SupressGui $SupressGui
-                if ($PSBoundParameters.ContainsKey('HasError')) {
-                   $HasError = $false
-                }
-                return     
+                return $false 
             }
             catch {
                 $errorMessage = $_.ToString()
                 [System.Windows.Forms.MessageBox]::Show($errorMessage, "Error", "OK", "Error")
-
-                if ($PSBoundParameters.ContainsKey('HasError')) {
-                    $HasError = $true
-                }
-
-                return              
+                return $true              
             }
         }
     }   
@@ -474,32 +449,20 @@ function Process-App {
     <# Requested app is not installed under any version #>
     if(-not $IsRequestedAppInstalled) {
         if ($NewerVersionExists) {
-            [System.Windows.Forms.MessageBox]::Show(("The requested app {0} has a newer version already published.`n`nVisit page `"Extension Management`" and install it from there. No action has been performed." -f $RequestedAppInformation.Name), "Newer App Available", "OK", "Error") | Out-Null                
-            
-            if ($PSBoundParameters.ContainsKey('HasError')) {
-                $HasError = $true
-            }
-            
-            return
+            [System.Windows.Forms.MessageBox]::Show(("The requested app {0} has a newer version already published.`n`nVisit page `"Extension Management`" and install it from there. No action has been performed." -f $RequestedAppInformation.Name), "Newer App Available", "OK", "Error") | Out-Null                            
+            return $true
         }
 
         if ($SameVersionExists) {
             [System.Windows.Forms.MessageBox]::Show(("The requested app {0} is already published with the same version {1}.`n`n`nVisit page `"Extension Management`" and install it from there. No action has been performed." -f $RequestedAppInformation.Name, $RequestedAppInformation.Version), "App Already Published", "OK", "Information") | Out-Null               
-            
-            if ($PSBoundParameters.ContainsKey('HasError')) {
-                $HasError = $false
-            }
-
-            return
+            return $true
         }
 
 
         if ($ShouldHandleProgressBar) {
             try {
                 Install-App -Path $AppPath -ServerInstance $ServerInstance -SyncMode $SyncMode -ProgressBarContainer $ProgressBarContainer -ProgressBar $ProgressBar -ProgressInfo $ProgressInfo -SupressGui $SupressGui
-                if ($PSBoundParameters.ContainsKey('HasError')) {
-                   $HasError = $false
-                }
+                return $false
             }
             catch {
                 $errorMessage = $_.ToString()
@@ -509,29 +472,18 @@ function Process-App {
                 UpdateUIElement -Element $ProgressBarContainer -Property "Visibility" -Value 2 # Hidden
                 UpdateUIElement -Element $ProgressInfo -Property "Text" -Value ""
                 UpdateUIElement -Element $ProgressBar -Property "Value" -Value 0
-
-                if ($PSBoundParameters.ContainsKey('HasError')) {
-                    $HasError = $true
-                }
-
-                return
+                
+                return $true
             }
         } else {
             try {
                 Install-App -Path $AppPath -ServerInstance $ServerInstance -SyncMode $SyncMode -SupressGui $SupressGui
-                if ($PSBoundParameters.ContainsKey('HasError')) {
-                   $HasError = $false
-                }
+                return $false
             }
             catch {
                 $errorMessage = $_.ToString()
                 [System.Windows.Forms.MessageBox]::Show($errorMessage, "Error", "OK", "Error")
-
-                if ($PSBoundParameters.ContainsKey('HasError')) {
-                   $HasError = $false
-                }
-        
-                return
+                return $true
             }
         }
     }
@@ -814,19 +766,15 @@ $var_MultipleAppPublishingSendAppBtn.Add_Click({
 
     foreach ($App in Sort-AppFilesByDependencies -appFiles $AppsPath.FullName) {
 		$AppInfo = Get-NAVAppInfo -Path $App
-        $HasError = $true
+        $HasErrors = $true
 
 		# Update Progress bar
 		UpdateUIElement -Element $var_MultipleAppPublishingProgressInfoTxt -Property "Text" "Processing app `"$($AppInfo.Name)`""
 		UpdateUIElement -Element $var_MultipleAppPublishingProgressBar -Property "Value" ($var_MultipleAppPublishingProgressBar.Value + $ProgressBarIncrementationValue)
 
-        Process-App -AppPath $App `
-                    -ServerInstance $var_MultipleAppPublishingServerInstanceComboBox.SelectedValue `
-                    -SyncMode $SyncMode `
-                    -SupressGui $true `
-                    -HasError ([ref]$HasError)
+        $HasErrors = Process-App -AppPath $App -ServerInstance $var_MultipleAppPublishingServerInstanceComboBox.SelectedValue -SyncMode $SyncMode -SupressGui $true
         
-        if ($HasError) {
+        if ($HasErrors -eq $true) {
             $AppInstallInfo = [PSCustomObject] @{
                 AppName = "$($AppInfo.Name)"
                 AppVersion = "$($AppInfo.Version)"
