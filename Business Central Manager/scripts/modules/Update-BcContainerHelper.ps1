@@ -6,6 +6,8 @@ Add-Type -AssemblyName PresentationFramework
 
 # Used to check for updates or install the BCContainerHelper module
 function Update-BcContainerHelper {
+    param ([System.Windows.Forms.IWin32Window] $Owner)
+
     try {
         # Check if BCContainerHelper module is installed
         $installedModule = Get-InstalledModule -Name BcContainerHelper -ErrorAction SilentlyContinue
@@ -20,7 +22,7 @@ function Update-BcContainerHelper {
             $latestVersion = (Find-Module -Name BcContainerHelper -Repository $repository -ErrorAction Stop).Version
 
             if ([version]$latestVersion -gt [version]$currentVersion) {
-                $ConfirmModuleUpdate = [System.Windows.Forms.MessageBox]::Show("PowerShell module BCContainerHelper found. Do you want to update the module?", "Confirm Module Update", "YesNo", "Question")
+                $ConfirmModuleUpdate = [System.Windows.Forms.MessageBox]::Show($Owner, "PowerShell module BCContainerHelper found. Do you want to update the module?", "Confirm Module Update", "YesNo", "Question")
 
                 if ($ConfirmModuleUpdate -eq "No") {
                     return
@@ -41,7 +43,7 @@ function Update-BcContainerHelper {
             }
         }
         else {
-            [System.Windows.Forms.MessageBox]::Show("PowerShell module BCContainerHelper not found. Press OK to install the required module now.", "BCContainerHelper Install", "OK", "Warning") | Out-Null
+            [System.Windows.Forms.MessageBox]::Show($Owner, "PowerShell module BCContainerHelper not found. Press OK to install the required module now.", "BCContainerHelper Install", "OK", "Warning") | Out-Null
 
             Write-Host "Installing BCContainerHelper module. Please wait...`n"
 

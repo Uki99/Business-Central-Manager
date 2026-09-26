@@ -8,12 +8,12 @@ set "scriptDir=%~dp0"
 set "jsonFile=%scriptDir%..\data\settings.json"
 
 :: Use PowerShell to read the HidePowerShellConsole setting from the JSON file
-for /f %%a in ('powershell -command "(Get-Content \"%jsonFile%\" | ConvertFrom-Json).settings.HidePowerShellConsole"') do (
-    set "HidePowerShellConsole=%%a"
+for /f %%a in ('powershell -NoProfile -Command "(Get-Content -LiteralPath $env:jsonFile -Raw | ConvertFrom-Json).settings.hidePowerShellConsole"') do (
+    set "hidePowerShellConsole=%%a"
 )
 
 :: Run PowerShell as administrator with the appropriate window style
-if "%HidePowerShellConsole%"=="True" (
+if "%hidePowerShellConsole%"=="True" (
     :: Run PowerShell script in hidden mode with admin privileges
     powershell -ExecutionPolicy Unrestricted -WindowStyle Hidden -NoProfile -File "%scriptDir%Business Central Manager.ps1" %*
 ) else (

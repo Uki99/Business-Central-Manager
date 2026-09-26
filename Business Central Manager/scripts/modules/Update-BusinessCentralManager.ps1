@@ -4,7 +4,7 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName PresentationFramework
 
-function Copy-BCManagerRelease {
+function Copy-BusinessCentralManagerRelease {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)] [string] $SourceRoot,
@@ -137,7 +137,7 @@ function Update-BusinessCentralManager {
         }
         $stagedSettingsPath = Join-Path $fullPathToGeneratedFolder 'Business Central Manager\data\settings.json'
         $tempSettings | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $stagedSettingsPath -Encoding UTF8 -ErrorAction Stop
-        Copy-BCManagerRelease -SourceRoot $fullPathToGeneratedFolder -DestinationRoot $applicationRootLocation -BackupRoot (Join-Path $tempRoot 'backup')
+        Copy-BusinessCentralManagerRelease -SourceRoot $fullPathToGeneratedFolder -DestinationRoot $applicationRootLocation -BackupRoot (Join-Path $tempRoot 'backup')
         
         Restart-BusinessCentralManager
         Write-Host "Successfully updated Business Central Manager to version $tempVersion. Restarting application.`n" -ForegroundColor Green

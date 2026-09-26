@@ -11,6 +11,138 @@
         ResizeMode="NoResize"
         FontFamily="Segoe UI">
 
+    <Window.Resources>
+        <Style TargetType="TabItem">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="TabSurface" Background="Transparent" CornerRadius="4,4,0,0" Margin="3,4,3,0" Padding="16,0">
+                            <Grid>
+                                <ContentPresenter x:Name="TabHeader" ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  TextElement.Foreground="#CEDAF2" TextElement.FontWeight="SemiBold"/>
+                                <Border x:Name="TabAccent" Height="3" Background="Orange" VerticalAlignment="Bottom" Visibility="Collapsed"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="TabSurface" Property="Background" Value="#294181"/>
+                                <Setter TargetName="TabHeader" Property="TextElement.Foreground" Value="White"/>
+                                <Setter TargetName="TabAccent" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                    <Condition Property="IsSelected" Value="False"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="TabSurface" Property="Background" Value="#1C2B6A"/>
+                                <Setter TargetName="TabHeader" Property="TextElement.Foreground" Value="White"/>
+                            </MultiTrigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="TabSurface" Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="SettingsSwitch" TargetType="CheckBox">
+            <Setter Property="Width" Value="48"/>
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="Margin" Value="10"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Grid Width="48" Height="26">
+                            <Border x:Name="Track" CornerRadius="13" BorderBrush="#879DC6" BorderThickness="1">
+                                <Border.Background>
+                                    <SolidColorBrush x:Name="TrackFill" Color="#34476D"/>
+                                </Border.Background>
+                            </Border>
+                            <Border x:Name="Thumb" Width="20" Height="20" CornerRadius="10" Background="White"
+                                    HorizontalAlignment="Left" VerticalAlignment="Center" Margin="3,0,0,0">
+                                <Border.RenderTransform>
+                                    <TranslateTransform x:Name="ThumbOffset"/>
+                                </Border.RenderTransform>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="ThumbOffset" Storyboard.TargetProperty="X" To="22" Duration="0:0:0.2">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseInOut"/>
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <ColorAnimation Storyboard.TargetName="TrackFill" Storyboard.TargetProperty="Color" To="#159F80" Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="ThumbOffset" Storyboard.TargetProperty="X" To="0" Duration="0:0:0.2">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseInOut"/>
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <ColorAnimation Storyboard.TargetName="TrackFill" Storyboard.TargetProperty="Color" To="#34476D" Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Track" Property="BorderBrush" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Track" Property="BorderBrush" Value="Orange"/>
+                                <Setter TargetName="Track" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="SettingsInput" TargetType="TextBox">
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="Margin" Value="10"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#182D5A"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CaretBrush" Value="White"/>
+            <Setter Property="BorderBrush" Value="#879DC6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="4,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="InputBorder" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
+                            <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="InputBorder" Property="BorderBrush" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter TargetName="InputBorder" Property="BorderBrush" Value="Orange"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
     <!-- Body 2x2 -->
     <Grid Background="Navy">
         <Grid.ColumnDefinitions>
@@ -23,9 +155,9 @@
             <RowDefinition />
         </Grid.RowDefinitions>
 
-        <!-- BEterna text -->
+        <!-- App title -->
         <TextBlock Grid.Row="0" Grid.Column="0"
-                   Text="BEterna"
+                   Text="BC Manager"
                    VerticalAlignment="Center"
                    HorizontalAlignment="Left"
                    Margin="20,0,0,0"
@@ -159,7 +291,7 @@
 
             <!-- About topic -->
             <RadioButton x:Name="AboutTopic"
-                         Tag="AboutTabs"
+                         Tag="AboutContent"
                          Content="About"
                          Height="50"
                          FontSize="14"
@@ -207,41 +339,6 @@
                         Background="Navy"
                         BorderThickness="0"
                         Margin="10,0,0,0">
-
-                <TabControl.Resources>
-                    <Style TargetType="TabItem">
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="TabItem">
-                                    <Grid>
-                                        <Border x:Name="Border"
-                                    Background="Navy"
-                                    CornerRadius="4"
-                                    Margin="0,0,-4,0">
-                                            <ContentPresenter x:Name="ContentSite"
-                                                  VerticalAlignment="Center"
-                                                  HorizontalAlignment="Center"
-                                                  ContentSource="Header"
-                                                  Margin="10,2" />
-                                        </Border>
-                                    </Grid>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter TargetName="Border" Property="Background" Value="CornflowerBlue" />
-                                        </Trigger>
-                                        <MultiTrigger>
-                                            <MultiTrigger.Conditions>
-                                                <Condition Property="IsMouseOver" Value="True" />
-                                                <Condition Property="IsSelected" Value="False" />
-                                            </MultiTrigger.Conditions>
-                                            <Setter TargetName="Border" Property="Background" Value="LightBlue" />
-                                        </MultiTrigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </TabControl.Resources>
 
                 <!-- App Publishing tab -->
                 <TabItem Header="App Publishing" 
@@ -548,41 +645,6 @@
                         Visibility="Hidden" 
                         IsEnabled="False">
 
-                <TabControl.Resources>
-                    <Style TargetType="TabItem">
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="TabItem">
-                                    <Grid>
-                                        <Border x:Name="Border"
-                                    Background="Navy"
-                                    CornerRadius="4"
-                                    Margin="0,0,-4,0">
-                                            <ContentPresenter x:Name="ContentSite"
-                                                  VerticalAlignment="Center"
-                                                  HorizontalAlignment="Center"
-                                                  ContentSource="Header"
-                                                  Margin="10,2" />
-                                        </Border>
-                                    </Grid>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter TargetName="Border" Property="Background" Value="CornflowerBlue" />
-                                        </Trigger>
-                                        <MultiTrigger>
-                                            <MultiTrigger.Conditions>
-                                                <Condition Property="IsMouseOver" Value="True" />
-                                                <Condition Property="IsSelected" Value="False" />
-                                            </MultiTrigger.Conditions>
-                                            <Setter TargetName="Border" Property="Background" Value="LightBlue" />
-                                        </MultiTrigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </TabControl.Resources>
-
                 <TabItem Header="License Management" 
                          Background="Navy" 
                          Foreground="White" 
@@ -696,41 +758,6 @@
                         Visibility="Hidden"
                         IsEnabled="False">
 
-                <TabControl.Resources>
-                    <Style TargetType="TabItem">
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="TabItem">
-                                    <Grid>
-                                        <Border x:Name="Border"
-                                    Background="Navy"
-                                    CornerRadius="4"
-                                    Margin="0,0,-4,0">
-                                            <ContentPresenter x:Name="ContentSite"
-                                                  VerticalAlignment="Center"
-                                                  HorizontalAlignment="Center"
-                                                  ContentSource="Header"
-                                                  Margin="10,2" />
-                                        </Border>
-                                    </Grid>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter TargetName="Border" Property="Background" Value="CornflowerBlue" />
-                                        </Trigger>
-                                        <MultiTrigger>
-                                            <MultiTrigger.Conditions>
-                                                <Condition Property="IsMouseOver" Value="True" />
-                                                <Condition Property="IsSelected" Value="False" />
-                                            </MultiTrigger.Conditions>
-                                            <Setter TargetName="Border" Property="Background" Value="LightBlue" />
-                                        </MultiTrigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </TabControl.Resources>
-
                 <TabItem Header="App Publishing" 
                          Background="Navy" 
                          Foreground="White" 
@@ -767,41 +794,6 @@
                         Visibility="Hidden"
                         IsEnabled="False">
 
-                <TabControl.Resources>
-                    <Style TargetType="TabItem">
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="TabItem">
-                                    <Grid>
-                                        <Border x:Name="Border"
-                                                Background="Navy"
-                                                CornerRadius="4"
-                                                Margin="0,0,-4,0">
-                                            <ContentPresenter x:Name="ContentSite"
-                                                              VerticalAlignment="Center"
-                                                              HorizontalAlignment="Center"
-                                                              ContentSource="Header"
-                                                              Margin="10,2" />
-                                        </Border>
-                                    </Grid>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter TargetName="Border" Property="Background" Value="CornflowerBlue" />
-                                        </Trigger>
-                                        <MultiTrigger>
-                                            <MultiTrigger.Conditions>
-                                                <Condition Property="IsMouseOver" Value="True" />
-                                                <Condition Property="IsSelected" Value="False" />
-                                            </MultiTrigger.Conditions>
-                                            <Setter TargetName="Border" Property="Background" Value="LightBlue" />
-                                        </MultiTrigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </TabControl.Resources>
-
                 <TabItem Header="General" 
                          Background="Navy" 
                          Foreground="White" 
@@ -819,7 +811,6 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
                             <RowDefinition />
                         </Grid.RowDefinitions>
                         
@@ -828,38 +819,36 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <TextBlock Text="Application Version:" Grid.Row="0" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
-                        <TextBox x:Name="ApplicationVersion" IsReadOnly="True" Grid.Row="0" Grid.Column="1" Margin="10" VerticalAlignment="Center"/>
+                        <TextBlock Text="Application version" Grid.Row="0" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="ApplicationVersion" Grid.Row="0" Grid.Column="1" Margin="10" VerticalAlignment="Center" FontSize="15" FontWeight="SemiBold" Foreground="White"/>
 
-                        <TextBlock Text="Hide PowerShell Console:" Grid.Row="1" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
-                        <CheckBox x:Name="HidePowerShellConsole" Grid.Row="1" Grid.Column="1" Margin="10" VerticalAlignment="Center" />
+                        <TextBlock Text="Hide PowerShell console" Grid.Row="1" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
+                        <CheckBox x:Name="HidePowerShellConsole" Grid.Row="1" Grid.Column="1" Style="{StaticResource SettingsSwitch}" AutomationProperties.Name="Hide PowerShell console"/>
 
-                        <TextBlock Text="NavAdminTool Absolute Path:" Grid.Row="2" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
-                        <TextBox x:Name="NavAdminTool" Grid.Row="2" Grid.Column="1" Margin="10" VerticalAlignment="Center"/>
+                        <TextBlock Text="NavAdminTool path" Grid.Row="2" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
+                        <TextBox x:Name="NavAdminTool" Grid.Row="2" Grid.Column="1" Style="{StaticResource SettingsInput}"/>
 
-                        <TextBlock Text="Main Window XAML Relative Path:" Grid.Row="3" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
-                        <TextBox x:Name="MainWindowXAMLRelativePath" Grid.Row="3" Grid.Column="1" Margin="10" VerticalAlignment="Center"/>
+                        <TextBlock Text="Supported BC version" Grid.Row="3" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
+                        <TextBox x:Name="SupportedBusinessCentralVersion" Grid.Row="3" Grid.Column="1" Style="{StaticResource SettingsInput}"/>
 
-                        <TextBlock Text="Supported Business Central Version:" Grid.Row="4" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
-                        <TextBox x:Name="SupportedBusinessCentralVersion" Grid.Row="4" Grid.Column="1" Margin="10" VerticalAlignment="Center"/>
+                        <TextBlock Text="Tenant ID" Grid.Row="4" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
+                        <TextBox x:Name="TenantId" Grid.Row="4" Grid.Column="1" Style="{StaticResource SettingsInput}"/>
 
-                        <TextBlock Text="Unpublish Last Installed App During Upgrade:" Grid.Row="5" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
-                        <CheckBox x:Name="UnpublishLastInstalledAppDuringUpgrade" Grid.Row="5" Grid.Column="1" Margin="10" VerticalAlignment="Center" />
+                        <TextBlock Text="Unpublish old app after upgrade" Grid.Row="5" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
+                        <CheckBox x:Name="UnpublishLastInstalledAppDuringUpgrade" Grid.Row="5" Grid.Column="1" Style="{StaticResource SettingsSwitch}" AutomationProperties.Name="Unpublish old app after upgrade" ToolTip="Only if no tenant still uses the old version."/>
 
-                        <TextBlock Text="Check for Updates BcContainerHelper:" Grid.Row="6" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
-                        <CheckBox x:Name="SearchForUpdateBcContainerHelper" Grid.Row="6" Grid.Column="1" Margin="10" VerticalAlignment="Center" />
+                        <TextBlock Text="Check BCContainerHelper updates on tab open" Grid.Row="6" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
+                        <CheckBox x:Name="SearchForUpdateBcContainerHelper" Grid.Row="6" Grid.Column="1" Style="{StaticResource SettingsSwitch}" AutomationProperties.Name="Check BCContainerHelper updates on tab open" ToolTip="Checks when opening Container Management and asks before updating."/>
 
-                        <TextBlock Text="Delay BcContainerHelper Module Import:" Grid.Row="7" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
-                        <CheckBox x:Name="DelayBcContainerHelperModuleImport" Grid.Row="7" Grid.Column="1" Margin="10" VerticalAlignment="Center" />
-
-                        <TextBlock Text="Check for Application Updates on Start:" Grid.Row="8" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
-                        <CheckBox x:Name="CheckForApplicationUpdateOnStart" Grid.Row="8" Grid.Column="1" Margin="10" VerticalAlignment="Center" />
+                        <TextBlock Text="Update app at startup" Grid.Row="7" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
+                        <CheckBox x:Name="CheckForApplicationUpdateOnStart" Grid.Row="7" Grid.Column="1" Style="{StaticResource SettingsSwitch}" AutomationProperties.Name="Update app at startup"/>
 
                         <Button VerticalAlignment="Bottom"
-                                Grid.Row="9"
+                            Grid.Row="8"
                                 Grid.ColumnSpan="2"
                                 Margin="0,10,0,30"
-                                Foreground="White"
+                                Foreground="#101D3B"
+                                FontWeight="SemiBold"
                                 Width="400"
                                 Height="40"
                                 Content="Save &amp; Restart"
@@ -871,7 +860,7 @@
                                     <Border Background="{TemplateBinding Background}"
                                             BorderBrush="{TemplateBinding BorderBrush}"
                                             BorderThickness="{TemplateBinding BorderThickness}"
-                                            CornerRadius="6">
+                                            CornerRadius="4">
                                         <ContentPresenter HorizontalAlignment="Center"
                                                           VerticalAlignment="Center"/>
                                     </Border>
@@ -883,56 +872,14 @@
                 </TabItem>
             </TabControl>
 
-            <!-- About tab control -->
-            <TabControl x:Name="AboutTabs" 
+                <!-- About view -->
+                <Grid x:Name="AboutContent"
                         Background="Navy"
-                        BorderThickness="0"
                         Margin="10,0,0,0"
                         Visibility="Hidden"
                         IsEnabled="False">
 
-                <TabControl.Resources>
-                    <Style TargetType="TabItem">
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="TabItem">
-                                    <Grid>
-                                        <Border x:Name="Border"
-                                                Background="Navy"
-                                                CornerRadius="4"
-                                                Margin="0,0,-4,0">
-                                            <ContentPresenter x:Name="ContentSite"
-                                                              VerticalAlignment="Center"
-                                                              HorizontalAlignment="Center"
-                                                              ContentSource="Header"
-                                                              Margin="10,2" />
-                                        </Border>
-                                    </Grid>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter TargetName="Border" Property="Background" Value="CornflowerBlue" />
-                                        </Trigger>
-                                        <MultiTrigger>
-                                            <MultiTrigger.Conditions>
-                                                <Condition Property="IsMouseOver" Value="True" />
-                                                <Condition Property="IsSelected" Value="False" />
-                                            </MultiTrigger.Conditions>
-                                            <Setter TargetName="Border" Property="Background" Value="LightBlue" />
-                                        </MultiTrigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </TabControl.Resources>
-
-                <TabItem x:Name="AboutTabItem" Header="About" 
-                        Background="Navy" 
-                        Foreground="White" 
-                        Height="50"
-                        FontSize="14">
-
-                    <Grid Margin="15,30,20,0">
+                    <Grid Margin="36,30,36,24">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
@@ -940,84 +887,108 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <TextBlock x:Name="AuthorTextBlock" Margin="10" Grid.Row="0">
-                            <Run Text="Author: " />
-                            <Run Text="Uglješa Ćirić" FontWeight="Bold" />
-                        </TextBlock>
+                        <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,0,0,28">
+                            <TextBlock Text="Business Central Manager" FontSize="28" FontWeight="SemiBold" Foreground="White" TextAlignment="Center"/>
+                            <TextBlock Text="BUSINESS CENTRAL / ON-PREMISES" FontSize="11" FontWeight="SemiBold" Foreground="#ACC2E8" TextAlignment="Center" Margin="0,7,0,0"/>
+                        </StackPanel>
 
-                        <TextBlock x:Name="VersionTextBlock" Margin="10" Grid.Row="1">
-                            <Run Text="Version: " />
-                            <Run x:Name="AboutTabDisplayVersionTxt" FontWeight="Bold"/>
-                        </TextBlock>
-
-                        <TextBlock x:Name="DescriptionTextBlock" Grid.Row="2" Margin="10,20,0,0">
-                            PowerShell based GUI application used for Business Central on premise managing. <LineBreak/>
-                            Please visit 
-                                <Hyperlink x:Name="GitHubLink" Foreground="Orange" NavigateUri="https://github.com/Uki99/Business-Central-Manager">
-                                    GitHub
-                                </Hyperlink>
-                                to report any issues or improve functionality.
-                        </TextBlock>
-
-                        <Grid Grid.Row="4" VerticalAlignment="Bottom">
+                        <Grid Grid.Row="1" HorizontalAlignment="Center">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="185" />
+                                <ColumnDefinition Width="185" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                                <TextBlock Text="VERSION" FontSize="11" FontWeight="SemiBold" Foreground="#ACC2E8" TextAlignment="Center" Margin="0,0,0,6"/>
+                                <TextBlock x:Name="VersionTextBlock" FontSize="15" Foreground="White" TextAlignment="Center">
+                                    <Run x:Name="AboutTabDisplayVersionTxt"/>
+                                </TextBlock>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                                <TextBlock Text="CREATED BY" FontSize="11" FontWeight="SemiBold" Foreground="#ACC2E8" TextAlignment="Center" Margin="0,0,0,6"/>
+                                <TextBlock x:Name="AuthorTextBlock" Text="Uglješa Ćirić" FontSize="15" Foreground="White" TextAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Grid.Row="2" Height="1" Background="#445B90" Margin="50,28,50,24"/>
+
+                        <TextBlock x:Name="DescriptionTextBlock" Grid.Row="3" FontSize="14" Foreground="#DCE5F5" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="550" HorizontalAlignment="Center">
+                            A PowerShell desktop application for managing Business Central on-premises.<LineBreak/><LineBreak/>
+                            Find updates and report issues on
+                            <Hyperlink x:Name="GitHubLink" Foreground="Orange" NavigateUri="https://github.com/Uki99/Business-Central-Manager">GitHub</Hyperlink>.
+                        </TextBlock>
+
+                        <Grid Grid.Row="5" HorizontalAlignment="Center">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="230" />
+                                <ColumnDefinition Width="230" />
                             </Grid.ColumnDefinitions>
 
-                            <Button VerticalAlignment="Bottom"
-                                Grid.Column="0"
-                                Margin="0,10,0,30"
-                                Foreground="White"
-                                Width="300"
-                                Height="40"
-                                Content="Check for Updates"
-                                Background="Orange"
-                                x:Name="CheckForUpdatesBtn">
-
+                            <Button x:Name="CheckForUpdatesBtn" Grid.Column="0" Width="212" Height="40" FontSize="14"
+                                    Foreground="#101D3B" FontWeight="SemiBold" Content="Check for Updates" Background="Orange">
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}"
-                                            BorderBrush="{TemplateBinding BorderBrush}"
-                                            BorderThickness="{TemplateBinding BorderThickness}"
-                                            CornerRadius="6">
-                                            <ContentPresenter HorizontalAlignment="Center"
-                                                          VerticalAlignment="Center"/>
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         </Border>
                                     </ControlTemplate>
                                 </Button.Template>
                             </Button>
 
-                            <Button VerticalAlignment="Bottom"
-                                Grid.Column="1"
-                                Margin="0,10,0,30"
-                                Foreground="White"
-                                Width="300"
-                                Height="40"
-                                Content="Show Documentation"
-                                Background="Orange"
-                                x:Name="ShowDocumentationBtn">
-
+                            <Button x:Name="ShowDocumentationBtn" Grid.Column="1" Width="212" Height="40" FontSize="14"
+                                    Foreground="White" FontWeight="SemiBold" Content="Show Documentation" Background="#28447F" BorderBrush="#6B86B7" BorderThickness="1">
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}"
-                                            BorderBrush="{TemplateBinding BorderBrush}"
-                                            BorderThickness="{TemplateBinding BorderThickness}"
-                                            CornerRadius="6">
-                                            <ContentPresenter HorizontalAlignment="Center"
-                                                          VerticalAlignment="Center"/>
+                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         </Border>
                                     </ControlTemplate>
                                 </Button.Template>
                             </Button>
                         </Grid>
 
-                        <TextBlock x:Name="CopyrightTextBlock" Grid.Row="5" HorizontalAlignment="Center" VerticalAlignment="Bottom" FontSize="13" Margin="0,0,0,10">All rights reserved 2023</TextBlock>
+                        <TextBlock x:Name="CopyrightTextBlock" Grid.Row="6" HorizontalAlignment="Center" Foreground="#B4C3E1" FontSize="11" Margin="0,24,0,0">Copyright 2026 Uglješa Ćirić. All rights reserved.</TextBlock>
                     </Grid>
-                </TabItem>
-            </TabControl>
+            </Grid>
         </Grid>
+        <Border x:Name="ContainerModuleLoading"
+                Grid.Row="0"
+                Grid.RowSpan="2"
+                Grid.Column="1"
+                Background="#E8090D31"
+                Visibility="Collapsed"
+                Panel.ZIndex="10">
+            <StackPanel Width="280" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="Loading BCContainerHelper..." Foreground="White" FontSize="18" FontWeight="SemiBold" TextAlignment="Center" Margin="0,0,0,16"/>
+                <Grid x:Name="ContainerLoadingSpinner" Width="30" Height="30" HorizontalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                    <Grid.RenderTransform>
+                        <RotateTransform/>
+                    </Grid.RenderTransform>
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Style.Triggers>
+                                <Trigger Property="IsVisible" Value="True">
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard Name="LoadingSpinner">
+                                            <Storyboard RepeatBehavior="Forever">
+                                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)" From="0" To="360" Duration="0:0:0.9"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.EnterActions>
+                                    <Trigger.ExitActions>
+                                        <RemoveStoryboard BeginStoryboardName="LoadingSpinner"/>
+                                    </Trigger.ExitActions>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+                    <Ellipse Width="26" Height="26" Stroke="#516A9C" StrokeThickness="3"/>
+                    <Path Data="M 15,2 A 13,13 0 0 1 28,15" Stroke="Orange" StrokeThickness="3" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                </Grid>
+            </StackPanel>
+        </Border>
     </Grid>
 </Window>

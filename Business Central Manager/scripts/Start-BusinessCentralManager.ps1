@@ -21,10 +21,20 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Unrestricted -Force
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName PresentationFramework
+Add-Type -ReferencedAssemblies System.Windows.Forms -TypeDefinition @'
+using System;
+using System.Windows.Forms;
+
+public sealed class BcManagerDialogOwner : IWin32Window
+{
+    public BcManagerDialogOwner(IntPtr handle) { Handle = handle; }
+    public IntPtr Handle { get; private set; }
+}
+'@
 
 
-# Start Initializer.ps1
-$scriptPath = ($PSScriptRoot + "\Initializer.ps1")
+# Start Initialize-BusinessCentralManager.ps1
+$scriptPath = Join-Path $PSScriptRoot 'Initialize-BusinessCentralManager.ps1'
 $Initializer = Start-Process -FilePath PowerShell.exe -WindowStyle $windowStyle -ArgumentList ('-NoProfile -ExecutionPolicy Unrestricted -File "{0}"' -f $scriptPath) -Wait -PassThru -ErrorAction Stop
 
 # Code 200 is a custom exit code that indicates update has happened, the app has been restarted so the initial parent process can close
@@ -100,8 +110,10 @@ catch {
     Exit
 }
 
-$inputXML = $inputXML -replace 'mc:Ignorable="d"', '' -replace "x:N", 'N' -replace '^<Win.*', '<Window'
 [XML]$MainWindowXAML = $inputXML
+$xamlNamespace = 'http://schemas.microsoft.com/winfx/2006/xaml'
+$MainWindowXAML.DocumentElement.RemoveAttribute('Class', $xamlNamespace)
+$MainWindowXAML.DocumentElement.RemoveAttribute('Ignorable', 'http://schemas.openxmlformats.org/markup-compatibility/2006')
 
 $reader = (New-Object System.Xml.XmlNodeReader $MainWindowXAML)
 try {
@@ -113,7 +125,7 @@ try {
 }
 
 # Set main window icon
-$IconPath = (($PSScriptRoot | Split-Path) + "\data\mainIcon.ico")
+$IconPath = Join-Path ($PSScriptRoot | Split-Path) 'data\icon.ico'
 
 # Create a FileStream to read the icon file
 $FileStream = [System.IO.File]::Open($IconPath, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
@@ -138,9 +150,15 @@ $Icon.EndInit()
 $Window.Icon = $Icon
 
 # Set control variables for GUI
-$MainWindowXAML.SelectNodes("//*[@Name]") | ForEach-Object {
+$namespaceManager = [System.Xml.XmlNamespaceManager]::new($MainWindowXAML.NameTable)
+$namespaceManager.AddNamespace('x', $xamlNamespace)
+$MainWindowXAML.SelectNodes('//*[@x:Name]', $namespaceManager) | ForEach-Object {
     try {
-        Set-Variable -Name "var_$($_.Name)" -Value $window.FindName($_.Name) -ErrorAction Stop
+        $controlName = $_.GetAttribute('Name', $xamlNamespace)
+        $control = $window.FindName($controlName)
+        if ($null -ne $control) {
+            Set-Variable -Name "var_$controlName" -Value $control -ErrorAction Stop
+        }
     } catch {
         $errorMessage = $_.ToString()
         [System.Windows.Forms.MessageBox]::Show($errorMessage, "Error", "OK", "Error")
@@ -218,25 +236,104 @@ function Set-TopicAvailability {
     }
 }
 
+$script:containerModuleReady = [bool](Get-Module -Name BcContainerHelper)
+$script:containerTimer = [System.Windows.Threading.DispatcherTimer]::new()
+$script:containerTimer.Interval = [TimeSpan]::FromMilliseconds(100)
+
+function Receive-ContainerModuleImport {
+    if (-not $script:containerInvocation -or -not $script:containerInvocation.IsCompleted) { return }
+
+    $warning = $null
+    try {
+        $result = @($script:containerPowerShell.EndInvoke($script:containerInvocation))[-1]
+        if (-not $result) { throw 'BCContainerHelper loading returned no result.' }
+        $warning = $result.Warning
+        if (-not $result.Loaded) { throw $result.Error }
+        $script:containerModuleReady = $true
+        $dependencyFailures.Remove('BcContainerHelper') | Out-Null
+    } catch {
+        $script:containerModuleReady = $false
+        $dependencyFailures['BcContainerHelper'] = [pscustomobject]@{
+            AttemptedAt = Get-Date
+            Source = 'BcContainerHelper'
+            Error = $_.Exception.Message
+        }
+    } finally {
+        $script:containerTimer.Stop()
+        $script:containerPowerShell.Dispose()
+        $script:containerPowerShell = $null
+        $script:containerInvocation = $null
+        if (-not $script:containerModuleReady) {
+            $script:containerRunspace.Dispose()
+            $script:containerRunspace = $null
+        }
+        $var_ContainerModuleLoading.Visibility = [System.Windows.Visibility]::Collapsed
+        $var_TopicsContainer.IsEnabled = $true
+        $var_ContainerManagementTopic.IsEnabled = $true
+        Set-TopicAvailability
+    }
+    if ($warning) {
+        [System.Windows.Forms.MessageBox]::Show(("Could not check BCContainerHelper updates: {0}" -f $warning), 'Update check failed', 'OK', 'Warning') | Out-Null
+    }
+    if ($script:containerModuleReady) {
+        $var_ContainerManagementTopic.IsChecked = $true
+    } else {
+        $failure = $dependencyFailures['BcContainerHelper']
+        [System.Windows.Forms.MessageBox]::Show(("BcContainerHelper still could not be loaded from {0}.`nAttempted: {1}`nReason: {2}" -f $failure.Source, $failure.AttemptedAt, $failure.Error), 'Dependency unavailable', 'OK', 'Error') | Out-Null
+    }
+}
+
+$script:containerTimer.Add_Tick({ Receive-ContainerModuleImport })
+
 function Start-ContainerModuleImport {
     $script:activeTopic.IsChecked = $true
     $var_ContainerManagementTopic.IsEnabled = $false
+    $var_TopicsContainer.IsEnabled = $false
     $var_ContainerModuleLoading.Visibility = [System.Windows.Visibility]::Visible
-    $null = $window.Dispatcher.BeginInvoke([Action]{
-        try {
-            $loaded = Import-RequiredDependency -Name BcContainerHelper
-            Set-TopicAvailability
-        } finally {
-            $var_ContainerModuleLoading.Visibility = [System.Windows.Visibility]::Collapsed
-            $var_ContainerManagementTopic.IsEnabled = $true
+    try {
+        $script:containerRunspace = [System.Management.Automation.Runspaces.RunspaceFactory]::CreateRunspace()
+        $script:containerRunspace.ApartmentState = 'STA'
+        $script:containerRunspace.Open()
+        $script:containerPowerShell = [PowerShell]::Create()
+        $script:containerPowerShell.Runspace = $script:containerRunspace
+        $null = $script:containerPowerShell.AddScript({
+            param ([bool] $checkForUpdates, [string] $updaterPath, [IntPtr] $ownerHandle)
+
+            $warning = $null
+            if ($checkForUpdates) {
+                try {
+                    Import-Module -Name $updaterPath -ErrorAction Stop
+                    Update-BcContainerHelper -Owner ([BcManagerDialogOwner]::new($ownerHandle))
+                } catch {
+                    $warning = $_.Exception.Message
+                }
+            }
+            try {
+                Import-Module -Name BcContainerHelper -ErrorAction Stop
+                [pscustomobject]@{ Loaded = $true; Warning = $warning; Error = $null }
+            } catch {
+                [pscustomobject]@{ Loaded = $false; Warning = $warning; Error = $_.Exception.Message }
+            }
+        }.ToString()).AddArgument([bool]$settings.settings.searchForUpdateBcContainerHelper).AddArgument(
+            (Join-Path $PSScriptRoot 'modules\Update-BcContainerHelper.ps1')).AddArgument(
+            ([System.Windows.Interop.WindowInteropHelper]::new($window).Handle))
+        $script:containerInvocation = $script:containerPowerShell.BeginInvoke()
+        $script:containerTimer.Start()
+    } catch {
+        if ($script:containerPowerShell) { $script:containerPowerShell.Dispose(); $script:containerPowerShell = $null }
+        if ($script:containerRunspace) { $script:containerRunspace.Dispose(); $script:containerRunspace = $null }
+        $script:containerInvocation = $null
+        $dependencyFailures['BcContainerHelper'] = [pscustomobject]@{
+            AttemptedAt = Get-Date
+            Source = 'BcContainerHelper'
+            Error = $_.Exception.Message
         }
-        if ($loaded) {
-            $var_ContainerManagementTopic.IsChecked = $true
-        } else {
-            $failure = $dependencyFailures['BcContainerHelper']
-            [System.Windows.Forms.MessageBox]::Show(("BcContainerHelper still could not be loaded from {0}.`nAttempted: {1}`nReason: {2}" -f $failure.Source, $failure.AttemptedAt, $failure.Error), 'Dependency unavailable', 'OK', 'Error') | Out-Null
-        }
-    }, [System.Windows.Threading.DispatcherPriority]::Background)
+        $var_ContainerModuleLoading.Visibility = [System.Windows.Visibility]::Collapsed
+        $var_TopicsContainer.IsEnabled = $true
+        $var_ContainerManagementTopic.IsEnabled = $true
+        Set-TopicAvailability
+        [System.Windows.Forms.MessageBox]::Show(("Could not start BCContainerHelper loading: {0}" -f $_.Exception.Message), 'Dependency unavailable', 'OK', 'Error') | Out-Null
+    }
 }
 
 function Update-ServerInstanceOptions {
@@ -649,7 +746,23 @@ function Save-ApplicationSetting {
     }
 
     $settings.settings.$SettingName = $newValue
-    $settings | ConvertTo-Json | Set-Content -Path (($PSScriptRoot | Split-Path) + "\data\settings.json")
+    Add-Type -AssemblyName System.Runtime.Serialization
+    $jsonBytes = [System.Text.Encoding]::UTF8.GetBytes(($settings | ConvertTo-Json -Compress))
+    $reader = [System.Runtime.Serialization.Json.JsonReaderWriterFactory]::CreateJsonReader($jsonBytes, [System.Xml.XmlDictionaryReaderQuotas]::Max)
+    $stream = [System.IO.MemoryStream]::new()
+    try {
+        $writer = [System.Runtime.Serialization.Json.JsonReaderWriterFactory]::CreateJsonWriter($stream, [System.Text.Encoding]::UTF8, $false, $true, '    ')
+        try {
+            $writer.WriteNode($reader, $true)
+            $writer.Flush()
+        } finally {
+            $writer.Dispose()
+        }
+        [System.IO.File]::WriteAllText($settingsPath, [System.Text.Encoding]::UTF8.GetString($stream.ToArray()), [System.Text.UTF8Encoding]::new($true))
+    } finally {
+        $reader.Dispose()
+        $stream.Dispose()
+    }
 }
 
 function Restart-BusinessCentralManager {
@@ -671,7 +784,7 @@ function Restart-BusinessCentralManager {
 # ---------------------- #
 
 $script:appJob = $null
-$script:appWorkerPath = Join-Path $PSScriptRoot 'modules\BCManager-AppWorker.ps1'
+$script:appWorkerPath = Join-Path $PSScriptRoot 'modules\Invoke-BusinessCentralAppDeployment.ps1'
 $script:appMainScriptPath = $PSCommandPath
 $script:appTimer = [System.Windows.Threading.DispatcherTimer]::new()
 $script:appTimer.Interval = [TimeSpan]::FromMilliseconds(250)
@@ -830,6 +943,13 @@ $script:appTimer.Add_Tick({
 $window.Add_Closing({
     param($windowSender, $closingArgs)
 
+    if ($script:containerInvocation -and -not $script:containerInvocation.IsCompleted) {
+        $confirmation = [System.Windows.Forms.MessageBox]::Show('BCContainerHelper is still loading. Closing may interrupt an update or installation. Close anyway?', 'Module loading in progress', 'YesNo', 'Warning')
+        if ($confirmation -ne 'Yes') {
+            $closingArgs.Cancel = $true
+            return
+        }
+    }
     if ($script:appJob) {
         if ($script:appJob.State -notin @('Completed', 'Failed', 'Stopped')) {
             $confirmation = [System.Windows.Forms.MessageBox]::Show('App publishing is still running. Closing may interrupt it. Close anyway?', 'Publishing in progress', 'YesNo', 'Warning')
@@ -841,6 +961,21 @@ $window.Add_Closing({
         }
         Remove-Job -Job $script:appJob -Force -ErrorAction SilentlyContinue
         $script:appJob = $null
+    }
+    if ($script:containerPowerShell) {
+        $script:containerTimer.Stop()
+        try {
+            if (-not $script:containerInvocation.IsCompleted) { $script:containerPowerShell.Stop() }
+        } finally {
+            $script:containerPowerShell.Dispose()
+            $script:containerRunspace.Dispose()
+            $script:containerPowerShell = $null
+            $script:containerRunspace = $null
+            $script:containerInvocation = $null
+        }
+    } elseif ($script:containerRunspace) {
+        $script:containerRunspace.Dispose()
+        $script:containerRunspace = $null
     }
     $script:appTimer.Stop()
 })
@@ -859,7 +994,7 @@ $window.Add_Loaded({
 
              if ($topicSender.Name -eq 'ContainerManagementTopic' -and
                  -not $dependencyFailures.ContainsKey('BcContainerHelper') -and
-                 -not (Get-Module -Name BcContainerHelper)) {
+                 -not $script:containerModuleReady) {
                  Start-ContainerModuleImport
                  return
              }
@@ -873,13 +1008,13 @@ $window.Add_Loaded({
              }
 
              $script:activeTopic = $topicSender
-             foreach ($tabControl in $var_TopicsTabContainer.Children) {
-                if (($tabControl.Name -eq $topicSender.Tag) -and ($tabControl -is [System.Windows.Controls.TabControl])) {
-                    Set-UIElement -Element $tabControl -Property "Visibility" -Value 0 # Visible
-                    Set-UIElement -Element $tabControl -Property "IsEnabled" -Value $true
+             foreach ($view in $var_TopicsTabContainer.Children) {
+                if ($view.Name -eq $topicSender.Tag) {
+                    Set-UIElement -Element $view -Property "Visibility" -Value 0 # Visible
+                    Set-UIElement -Element $view -Property "IsEnabled" -Value $true
                 } else {
-                    Set-UIElement -Element $tabControl -Property "Visibility" -Value 2 # Hidden
-                    Set-UIElement -Element $tabControl -Property "IsEnabled" -Value $false
+                    Set-UIElement -Element $view -Property "Visibility" -Value 2 # Hidden
+                    Set-UIElement -Element $view -Property "IsEnabled" -Value $false
                 }
              }
         })
@@ -1099,7 +1234,7 @@ $var_SettingsSaveBtn.Add_Click({
 # ------------------------------ #
 
 $var_CheckForUpdatesBtn.Add_Click({
-    Import-Module -Force (($PSScriptRoot | Split-Path) + "\scripts\modules\BCManager-UpdateManagement.ps1")
+    Import-Module -Force (Join-Path $PSScriptRoot 'modules\Update-BusinessCentralManager.ps1')
 
     $owner = "Uki99"
     $repo = "Business-Central-Manager"

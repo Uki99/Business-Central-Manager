@@ -3,7 +3,7 @@
                                                                                     ### Setup Section ###
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
-Set-ExecutionPolicy Unrestricted
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Unrestricted -Force
 
 Import-Module -Force (($PSScriptRoot | Split-Path) + "\scripts\modules\BCManager-UpdateManagement.ps1")
 Import-Module -Force (($PSScriptRoot | Split-Path) + "\scripts\modules\BCContainerHelper-UpdateManagement.ps1")
@@ -28,8 +28,8 @@ catch {
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 # Used to check and update main application
-function Update-BCManager {
-    if (-not $settings.settings.CheckForApplicationUpdateOnStart) {
+function Start-BusinessCentralManagerUpdateCheck {
+    if (-not $settings.settings.checkForApplicationUpdateOnStart) {
         return
     }
 
@@ -40,29 +40,27 @@ function Update-BCManager {
     $exitCode = 0
     
     try {
-        Update-BCManagerApplication -owner $owner -repo $repo -currentVersion $settings.settings.ApplicationVersion -upToDateMessage $false
+        Update-BusinessCentralManager -Owner $owner -Repository $repo -CurrentVersion $settings.settings.applicationVersion -ShowUpToDateMessage $false
     } catch {
         $errorMessage = $_.ToString()
-        Write-Host "Error occurred during application update:`n$errorMessage`n`nPress any key to continue" -ForegroundColor Red
-        $null = Read-Host
+        Write-Host "Error occurred during application update:`n$errorMessage" -ForegroundColor Red
     }
 }
 
 
 # Used to update/install the required module BcContainer helper neccesary for application
-function Update-BcContainerHelper {
-    if (-not $settings.settings.SearchForUpdateBcContainerHelper) {
+function Start-BcContainerHelperUpdateCheck {
+    if (-not $settings.settings.searchForUpdateBcContainerHelper) {
         return
     }
 
     Write-Host "Checking for BcContainerHelper module updates. Please wait...`n"
 
     try {
-        Update-BCContainerHelperModule
+        Update-BcContainerHelper
     } catch {
         $errorMessage = $_.ToString()
-        Write-Host "Error occurred during BCContainerHelper update:`n$errorMessage`n`nPress any key to continue" -ForegroundColor Red
-        $null = Read-Host
+        Write-Host "Error occurred during BCContainerHelper update:`n$errorMessage" -ForegroundColor Red
     }
 }
 
@@ -74,8 +72,8 @@ function Update-BcContainerHelper {
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 Write-Host "Running initializer...`n`n" -ForegroundColor Green
-Update-BCManager
-Update-BcContainerHelper
+Start-BusinessCentralManagerUpdateCheck
+Start-BcContainerHelperUpdateCheck
 Write-Host "Initializer finishing...`n`n" -ForegroundColor Green
 
 Exit 0
