@@ -243,10 +243,8 @@ function Set-TopicAvailability {
         $failureName = Get-TopicDependencyFailure -TopicName $topic.Name
         if ($failureName) {
             $topic.Opacity = 0.45
-            $topic.ToolTip = "$failureName could not be loaded. Click for details."
         } else {
             $topic.Opacity = 1
-            $topic.ToolTip = $null
         }
     }
 }
@@ -1218,6 +1216,7 @@ $var_GetCurrentBcLicenseInfoBtn.Add_Click({
     $licenseText.IsReadOnly = $true
     $licenseText.TextWrapping = [System.Windows.TextWrapping]::Wrap
     $licenseText.VerticalScrollBarVisibility = [System.Windows.Controls.ScrollBarVisibility]::Auto
+    $licenseText.ToolTip = 'Current license details for the selected server instance (read-only).'
     $licenseWindow.Content = $licenseText
     $null = $licenseWindow.ShowDialog()
 })

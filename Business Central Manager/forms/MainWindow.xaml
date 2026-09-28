@@ -527,7 +527,8 @@
                             <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,10">
                                 <Label Content="Server Instance" VerticalAlignment="Center" Width="120"/>
 
-                                <ComboBox Width="210" Height="32" x:Name="AppPublishingServerInstanceComboBox">
+                                <ComboBox Width="210" Height="32" x:Name="AppPublishingServerInstanceComboBox"
+                                          ToolTip="Choose a running server instance matching the supported BC version filter.">
                                     <ComboBox.Items></ComboBox.Items>
                                 </ComboBox>
                             </StackPanel>
@@ -535,7 +536,8 @@
                             <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,10">
                                 <Label Content="Sync Mode" VerticalAlignment="Center" Width="120"/>
 
-                                <ComboBox Width="210" SelectedIndex="0" Height="32" x:Name="AppPublishingSyncModeComboBox">
+                                <ComboBox Width="210" SelectedIndex="0" Height="32" x:Name="AppPublishingSyncModeComboBox"
+                                          ToolTip="Choose the app's schema sync mode. Add is the default; ForceSync can remove schema or data.">
                                     <ComboBox.Items>
                                         <ComboBoxItem>Add (default)</ComboBoxItem>
                                         <ComboBoxItem>Development</ComboBoxItem>
@@ -551,6 +553,7 @@
                                         Width="210"
                                     Height="32"
                                         Content="Choose"
+                                        ToolTip="Select a .app package to publish or upgrade."
                                         x:Name="AppPublishingChooseAppBtn">
                                 </Button>
                             </StackPanel>
@@ -563,6 +566,7 @@
                                     Height="32"
                                         Content="Send"
                                     Style="{StaticResource BusinessCentralActionButton}"
+                                        ToolTip="Confirm and process this app on the selected server and tenant."
                                         x:Name="AppPublishingSendAppBtn">
                                 </Button>
                             </StackPanel>
@@ -591,7 +595,7 @@
                             <DockPanel Grid.Row="0" Grid.Column="0" Margin="0,0,20,10" Style="{StaticResource DockPanelStyle}">
                                 <Label Content="Name" VerticalAlignment="Center" Width="60"/>
 
-                                <Border Style="{StaticResource ReadOnlyField}">
+                                <Border Style="{StaticResource ReadOnlyField}" ToolTip="Name declared by the selected .app package.">
                                     <TextBlock VerticalAlignment="Center" x:Name="AppPublishingAppNameTxt"></TextBlock>
                                 </Border>
                             </DockPanel>
@@ -599,7 +603,7 @@
                             <DockPanel Grid.Row="1" Grid.Column="0" Margin="0,0,20,0" Style="{StaticResource DockPanelStyle}">
                                 <Label Content="App ID" VerticalAlignment="Center" Width="60" />
 
-                                <Border Style="{StaticResource ReadOnlyField}">
+                                <Border Style="{StaticResource ReadOnlyField}" ToolTip="Unique app ID declared by the selected .app package.">
                                     <TextBlock VerticalAlignment="Center" x:Name="AppPublishingAppIdTxt"></TextBlock>
                                 </Border>
                             </DockPanel>
@@ -607,7 +611,7 @@
                             <DockPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,10" Style="{StaticResource DockPanelStyle}">
                                 <Label Content="Version" VerticalAlignment="Center" Width="70"/>
 
-                                <Border Style="{StaticResource ReadOnlyField}">
+                                <Border Style="{StaticResource ReadOnlyField}" ToolTip="Version declared by the selected .app package.">
                                     <TextBlock VerticalAlignment="Center" x:Name="AppPublishingAppVersionTxt"></TextBlock>
                                 </Border>
                             </DockPanel>
@@ -615,7 +619,7 @@
                             <DockPanel Grid.Row="1" Grid.Column="1" Style="{StaticResource DockPanelStyle}">
                                 <Label Content="Publisher" VerticalAlignment="Center" Width="70"/>
 
-                                <Border Style="{StaticResource ReadOnlyField}">
+                                <Border Style="{StaticResource ReadOnlyField}" ToolTip="Publisher declared by the selected .app package.">
                                     <TextBlock VerticalAlignment="Center" x:Name="AppPublishingAppPublisherTxt"></TextBlock>
                                 </Border>
                             </DockPanel>
@@ -623,7 +627,7 @@
                             <DockPanel Grid.Row="2" Grid.ColumnSpan="2" Margin="0,20,0,0" Style="{StaticResource DockPanelStyle}">
                                 <Label Content="Path" VerticalAlignment="Center" Width="60"/>
 
-                                <Border Style="{StaticResource ReadOnlyField}">
+                                <Border Style="{StaticResource ReadOnlyField}" ToolTip="Full path to the selected .app package.">
                                     <TextBlock VerticalAlignment="Center" x:Name="AppPublishingAppPathTxt" TextWrapping="Wrap"></TextBlock>
                                 </Border>
                             </DockPanel>
@@ -631,7 +635,8 @@
                             <!-- Progress Bar -->
                             <StackPanel Grid.Row="3" Grid.ColumnSpan="2" VerticalAlignment="Bottom" Margin="0,0,0,30" x:Name="AppPublishingProgress" Visibility="Hidden" IsEnabled="False">
                                 <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,0,0,10" x:Name="AppPublishingProgressInfoTxt">Working on it...</TextBlock>
-                                <ProgressBar Width="600" Height="20" x:Name="AppPublishingProgressBar" Value="0"/>
+                                <ProgressBar Width="600" Height="20" x:Name="AppPublishingProgressBar" Value="0"
+                                             ToolTip="Shows that the selected app is being processed."/>
                             </StackPanel>
                         </Grid>
                     </Grid>
@@ -666,7 +671,8 @@
                             <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,10">
                                 <Label Content="Server Instance" VerticalAlignment="Center" Width="140"/>
 
-                                <ComboBox Width="210" Height="32" x:Name="MultipleAppPublishingServerInstanceComboBox">
+                                <ComboBox Width="210" Height="32" x:Name="MultipleAppPublishingServerInstanceComboBox"
+                                          ToolTip="Choose a running server instance matching the supported BC version filter.">
                                     <ComboBox.Items></ComboBox.Items>
                                 </ComboBox>
                             </StackPanel>
@@ -674,7 +680,8 @@
                             <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,10">
                                 <Label Content="Sync Mode" VerticalAlignment="Center" Width="120"/>
 
-                                <ComboBox Width="210" SelectedIndex="0" Height="32" x:Name="MultipleAppPublishingSyncModeComboBox">
+                                <ComboBox Width="210" SelectedIndex="0" Height="32" x:Name="MultipleAppPublishingSyncModeComboBox"
+                                          ToolTip="Choose the apps' schema sync mode. Add is the default; ForceSync can remove schema or data.">
                                     <ComboBox.Items>
                                         <ComboBoxItem>Add (default)</ComboBoxItem>
                                         <ComboBoxItem>Development</ComboBoxItem>
@@ -690,6 +697,7 @@
                                         Width="210"
                                     Height="32"
                                         Content="Choose"
+                                        ToolTip="Select a folder of .app packages (only files in this folder are processed)."
                                         x:Name="MultipleAppPublishingChooseAppBtn">
                                 </Button>
                             </StackPanel>
@@ -702,6 +710,7 @@
                                     Height="32"
                                         Content="Send"
                                     Style="{StaticResource BusinessCentralActionButton}"
+                                        ToolTip="Confirm and process every .app in the folder on this server and tenant."
                                         x:Name="MultipleAppPublishingSendAppBtn">
                                 </Button>
                             </StackPanel>
@@ -723,13 +732,14 @@
                             <StackPanel>
                                 <DockPanel Style="{StaticResource DockPanelStyle}" Margin="0,0,0,20">
                                     <Label Content="Folder Path" VerticalAlignment="Center" Width="80" />
-                                    <Border Style="{StaticResource ReadOnlyField}">
+                                    <Border Style="{StaticResource ReadOnlyField}" ToolTip="Selected folder containing the .app packages.">
                                         <TextBlock VerticalAlignment="Center" x:Name="MultipleAppPublishingAppPathTxt" TextWrapping="Wrap" />
                                     </Border>
                                 </DockPanel>
 
                                 <ScrollViewer Grid.Row="0" MaxHeight="230" VerticalScrollBarVisibility="Auto" FontSize="12">
-                                    <ListView x:Name="MultipleAppPublishingAppStatusList">
+                                    <ListView x:Name="MultipleAppPublishingAppStatusList"
+                                              ToolTip="Result for each app after batch publishing; check means success, cross means failed or skipped.">
                                         <ListView.View>
                                             <GridView AllowsColumnReorder="False">
                                                 <GridView.ColumnHeaderContainerStyle>
@@ -759,7 +769,7 @@
                                                 <GridViewColumn Header="Status" Width="80">
                                                     <GridViewColumn.CellTemplate>
                                                         <DataTemplate>
-                                                            <TextBlock Text="{Binding Status}">
+                                                            <TextBlock Text="{Binding Status}" ToolTip="Check: succeeded. Cross: failed or skipped.">
                                                                 <TextBlock.Style>
                                                                     <Style TargetType="TextBlock">
                                                                         <Setter Property="HorizontalAlignment" Value="Center" />
@@ -787,7 +797,8 @@
                             <!-- Progress Bar -->
                             <StackPanel Grid.Row="1" VerticalAlignment="Bottom" Margin="0,0,0,30" x:Name="MultipleAppPublishingProgress" Visibility="Hidden" IsEnabled="False">
                                 <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,0,0,10" x:Name="MultipleAppPublishingProgressInfoTxt">Working on it...</TextBlock>
-                                <ProgressBar Width="600" Height="20" x:Name="MultipleAppPublishingProgressBar" Value="0"/>
+                                <ProgressBar Width="600" Height="20" x:Name="MultipleAppPublishingProgressBar" Value="0"
+                                             ToolTip="Shows how many .app packages have finished processing."/>
                             </StackPanel>
                         </Grid>
                     </Grid>
@@ -827,7 +838,8 @@
                         <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,10">
                             <Label Content="Server Instance" VerticalAlignment="Center" Width="120"/>
 
-                            <ComboBox Width="210" Height="32" x:Name="LicenseServerInstanceComboBox">
+                            <ComboBox Width="210" Height="32" x:Name="LicenseServerInstanceComboBox"
+                                      ToolTip="Choose a running server instance matching the supported BC version filter.">
                                 <ComboBox.Items></ComboBox.Items>
                             </ComboBox>
                         </StackPanel>
@@ -839,6 +851,7 @@
 				                    Width="210"
                                     Height="32"
 				                    Content="Choose"
+                                    ToolTip="Select a .flf or .bclicense file to import."
 				                    x:Name="LicenseChooseBtn">
                             </Button>
                         </StackPanel>
@@ -846,7 +859,7 @@
                         <DockPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,20,0,0" Style="{StaticResource DockPanelStyle}">
                             <Label Content="Path" VerticalAlignment="Center" Width="60"/>
 
-                            <Border Style="{StaticResource ReadOnlyField}">
+                            <Border Style="{StaticResource ReadOnlyField}" ToolTip="Full path to the selected license file.">
                                 <TextBlock VerticalAlignment="Center" x:Name="LicensePathTxt" TextWrapping="Wrap"></TextBlock>
                             </Border>
                         </DockPanel>
@@ -860,6 +873,7 @@
                                     Height="40"
                                     Content="Load license &amp; restart instance"
                                     Style="{StaticResource BusinessCentralActionButton}"
+                                    ToolTip="Confirm, import the license, then restart the selected server instance."
                                     x:Name="LoadBcLicenseBtn">
                             </Button>
 
@@ -868,6 +882,7 @@
                                     Width="400"
                                     Height="40"
                                     Content="Get current license information"
+                                    ToolTip="Open a read-only window with the selected server's current license details."
                                     x:Name="GetCurrentBcLicenseInfoBtn">
                             </Button>
                         </StackPanel>                        
@@ -947,26 +962,32 @@
                             </Grid>
 
                                 <ContentControl Content="Supported BC version" Grid.Row="1" Grid.Column="0" Style="{StaticResource SettingsCaption}"/>
-                                <TextBox x:Name="SupportedBusinessCentralVersion" Grid.Row="1" Grid.Column="1" Style="{StaticResource SettingsInput}"/>
+                                <TextBox x:Name="SupportedBusinessCentralVersion" Grid.Row="1" Grid.Column="1" Style="{StaticResource SettingsInput}"
+                                         ToolTip="Version filter (regular expression) for running server instances shown in the lists."/>
 
                                 <ContentControl Content="Tenant ID" Grid.Row="2" Grid.Column="0" Style="{StaticResource SettingsCaption}"/>
-                                <TextBox x:Name="TenantId" Grid.Row="2" Grid.Column="1" Style="{StaticResource SettingsInput}"/>
+                                <TextBox x:Name="TenantId" Grid.Row="2" Grid.Column="1" Style="{StaticResource SettingsInput}"
+                                         ToolTip="Tenant to install or upgrade apps for; required before publishing."/>
 
                                 <ContentControl Content="Hide PowerShell console" Grid.Row="3" Grid.Column="0" Style="{StaticResource SettingsCaption}"/>
-                                <CheckBox x:Name="HidePowerShellConsole" Grid.Row="3" Grid.Column="1" Style="{StaticResource SettingsSwitch}" AutomationProperties.Name="Hide PowerShell console"/>
+                                <CheckBox x:Name="HidePowerShellConsole" Grid.Row="3" Grid.Column="1" Style="{StaticResource SettingsSwitch}" AutomationProperties.Name="Hide PowerShell console"
+                                          ToolTip="Start Business Central Manager with its PowerShell console hidden."/>
 
                                 <ContentControl Content="Unpublish old app after upgrade" Grid.Row="4" Grid.Column="0" Style="{StaticResource SettingsCaption}"/>
-                                <CheckBox x:Name="UnpublishLastInstalledAppDuringUpgrade" Grid.Row="4" Grid.Column="1" Style="{StaticResource SettingsSwitch}" AutomationProperties.Name="Unpublish old app after upgrade" ToolTip="Only if no tenant still uses the old version."/>
+                                <CheckBox x:Name="UnpublishLastInstalledAppDuringUpgrade" Grid.Row="4" Grid.Column="1" Style="{StaticResource SettingsSwitch}" AutomationProperties.Name="Unpublish old app after upgrade"
+                                          ToolTip="After upgrading, unpublish the previous app version only if no tenant still uses it."/>
 
                                 <ContentControl Content="Check BCContainerHelper updates on tab open" Grid.Row="5" Grid.Column="0" Style="{StaticResource SettingsCaption}"/>
                                 <CheckBox x:Name="SearchForUpdateBcContainerHelper" Grid.Row="5" Grid.Column="1" Style="{StaticResource SettingsSwitch}" AutomationProperties.Name="Check BCContainerHelper updates on tab open" ToolTip="Checks when opening Container Management and asks before updating."/>
 
                                 <ContentControl Content="Update app at startup" Grid.Row="6" Grid.Column="0" Style="{StaticResource SettingsCaption}"/>
-                                <CheckBox x:Name="CheckForApplicationUpdateOnStart" Grid.Row="6" Grid.Column="1" Style="{StaticResource SettingsSwitch}" AutomationProperties.Name="Update app at startup"/>
+                                <CheckBox x:Name="CheckForApplicationUpdateOnStart" Grid.Row="6" Grid.Column="1" Style="{StaticResource SettingsSwitch}" AutomationProperties.Name="Update app at startup"
+                                          ToolTip="Check GitHub releases at startup and ask before installing an update."/>
 
                                 <Button x:Name="SettingsSaveBtn" Grid.Row="7" Grid.ColumnSpan="2" Margin="0,10,10,0"
                                     VerticalAlignment="Bottom" HorizontalAlignment="Right"
-                                    Style="{StaticResource BusinessCentralActionButton}" Content="Save &amp; Restart"/>
+                                    Style="{StaticResource BusinessCentralActionButton}" Content="Save &amp; Restart"
+                                    ToolTip="Confirm, save these settings, and restart Business Central Manager."/>
 
                         </Grid>
                     </Border>
@@ -1021,7 +1042,8 @@
                         <TextBlock x:Name="DescriptionTextBlock" Grid.Row="3" FontSize="14" Foreground="#323130" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="550" HorizontalAlignment="Center">
                             A PowerShell desktop application for managing Business Central on-premises.<LineBreak/><LineBreak/>
                             Find updates and report issues on
-                            <Hyperlink x:Name="GitHubLink" Foreground="#008489" NavigateUri="https://github.com/Uki99/Business-Central-Manager">GitHub</Hyperlink>.
+                            <Hyperlink x:Name="GitHubLink" Foreground="#008489" NavigateUri="https://github.com/Uki99/Business-Central-Manager"
+                                       ToolTip="Open the project's GitHub page for releases and issues.">GitHub</Hyperlink>.
                         </TextBlock>
 
                         <Grid Grid.Row="5" HorizontalAlignment="Center">
@@ -1031,11 +1053,12 @@
                             </Grid.ColumnDefinitions>
 
                             <Button x:Name="CheckForUpdatesBtn" Grid.Column="0" Width="212" Height="40" FontSize="14"
-                                    Content="Check for Updates" Style="{StaticResource BusinessCentralActionButton}">
+                                    Content="Check for Updates" Style="{StaticResource BusinessCentralActionButton}"
+                                    ToolTip="Check GitHub for a newer release; confirm before installing it.">
                             </Button>
 
                             <Button x:Name="ShowDocumentationBtn" Grid.Column="1" Width="212" Height="40" FontSize="14"
-                                    Content="Show Documentation">
+                                    Content="Show Documentation" ToolTip="Open the bundled PDF manual in your default viewer.">
                             </Button>
                         </Grid>
 
