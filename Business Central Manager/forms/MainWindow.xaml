@@ -13,29 +13,50 @@
 
     <Window.Resources>
         <Style TargetType="TabItem">
+            <Setter Property="Foreground" Value="#323130"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TabItem">
-                        <Border x:Name="TabSurface" Background="Transparent" CornerRadius="4,4,0,0" Margin="3,4,3,0" Padding="16,0">
+                        <Border x:Name="TabSurface" Background="Transparent" Margin="3,4,3,0" Padding="16,0">
                             <Grid>
                                 <ContentPresenter x:Name="TabHeader" ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                  TextElement.Foreground="#CEDAF2" TextElement.FontWeight="SemiBold"/>
-                                <Border x:Name="TabAccent" Height="3" Background="Orange" VerticalAlignment="Bottom" Visibility="Collapsed"/>
+                                                  TextElement.Foreground="#526776" TextElement.FontWeight="SemiBold"/>
+                                <Border x:Name="TabAccent" Height="3" Background="#008489" VerticalAlignment="Bottom"
+                                        Visibility="Collapsed" RenderTransformOrigin="0,0.5">
+                                    <Border.RenderTransform>
+                                        <ScaleTransform/>
+                                    </Border.RenderTransform>
+                                </Border>
                             </Grid>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="TabSurface" Property="Background" Value="#294181"/>
-                                <Setter TargetName="TabHeader" Property="TextElement.Foreground" Value="White"/>
+                                <Setter TargetName="TabSurface" Property="Background" Value="#F8FAFC"/>
+                                <Setter TargetName="TabHeader" Property="TextElement.Foreground" Value="#243B53"/>
                                 <Setter TargetName="TabAccent" Property="Visibility" Value="Visible"/>
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="TabAccent"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                             From="0" To="1" Duration="0:0:0.22">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut"/>
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetName="TabHeader" Storyboard.TargetProperty="Opacity"
+                                                             From="0.6" To="1" Duration="0:0:0.22"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
                             </Trigger>
                             <MultiTrigger>
                                 <MultiTrigger.Conditions>
                                     <Condition Property="IsMouseOver" Value="True"/>
                                     <Condition Property="IsSelected" Value="False"/>
                                 </MultiTrigger.Conditions>
-                                <Setter TargetName="TabSurface" Property="Background" Value="#1C2B6A"/>
-                                <Setter TargetName="TabHeader" Property="TextElement.Foreground" Value="White"/>
+                                <Setter TargetName="TabSurface" Property="Background" Value="#E5F3F3"/>
+                                <Setter TargetName="TabHeader" Property="TextElement.Foreground" Value="#006C70"/>
                             </MultiTrigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="TabSurface" Property="Opacity" Value="0.45"/>
@@ -45,19 +66,67 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style TargetType="TabControl">
+            <Setter Property="Background" Value="#F4F7FA"/>
+            <Setter Property="Foreground" Value="#323130"/>
+            <Setter Property="BorderBrush" Value="#CCD7E2"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style x:Key="TopicNavigationButton" TargetType="RadioButton">
+            <Setter Property="Height" Value="50"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#243B53"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="TopicSurface" Background="{TemplateBinding Background}" BorderBrush="Transparent" BorderThickness="1">
+                            <Grid>
+                                <Border x:Name="TopicAccent" Width="3" Background="#008489" HorizontalAlignment="Left" Visibility="Collapsed"/>
+                                <ContentPresenter Margin="20,0,12,0" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                  TextElement.Foreground="{TemplateBinding Foreground}" TextElement.FontWeight="{TemplateBinding FontWeight}"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="TopicSurface" Property="Background" Value="#E5F3F3"/>
+                                <Setter TargetName="TopicAccent" Property="Visibility" Value="Visible"/>
+                                <Setter Property="Foreground" Value="#006C70"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                    <Condition Property="IsChecked" Value="False"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="TopicSurface" Property="Background" Value="#EBF1F4"/>
+                            </MultiTrigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="TopicSurface" Property="BorderBrush" Value="#008489"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style x:Key="SettingsSwitch" TargetType="CheckBox">
             <Setter Property="Width" Value="48"/>
             <Setter Property="Height" Value="26"/>
-            <Setter Property="Margin" Value="10"/>
+            <Setter Property="Margin" Value="10,7"/>
             <Setter Property="HorizontalAlignment" Value="Left"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="CheckBox">
                         <Grid Width="48" Height="26">
-                            <Border x:Name="Track" CornerRadius="13" BorderBrush="#879DC6" BorderThickness="1">
+                            <Border x:Name="Track" CornerRadius="13" BorderBrush="#8A8886" BorderThickness="1">
                                 <Border.Background>
-                                    <SolidColorBrush x:Name="TrackFill" Color="#34476D"/>
+                                    <SolidColorBrush x:Name="TrackFill" Color="#E1DFDD"/>
                                 </Border.Background>
                             </Border>
                             <Border x:Name="Thumb" Width="20" Height="20" CornerRadius="10" Background="White"
@@ -69,6 +138,7 @@
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Track" Property="BorderBrush" Value="#008489"/>
                                 <Trigger.EnterActions>
                                     <BeginStoryboard>
                                         <Storyboard>
@@ -77,7 +147,7 @@
                                                     <CubicEase EasingMode="EaseInOut"/>
                                                 </DoubleAnimation.EasingFunction>
                                             </DoubleAnimation>
-                                            <ColorAnimation Storyboard.TargetName="TrackFill" Storyboard.TargetProperty="Color" To="#159F80" Duration="0:0:0.2"/>
+                                            <ColorAnimation Storyboard.TargetName="TrackFill" Storyboard.TargetProperty="Color" To="#008489" Duration="0:0:0.2"/>
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </Trigger.EnterActions>
@@ -89,16 +159,16 @@
                                                     <CubicEase EasingMode="EaseInOut"/>
                                                 </DoubleAnimation.EasingFunction>
                                             </DoubleAnimation>
-                                            <ColorAnimation Storyboard.TargetName="TrackFill" Storyboard.TargetProperty="Color" To="#34476D" Duration="0:0:0.2"/>
+                                            <ColorAnimation Storyboard.TargetName="TrackFill" Storyboard.TargetProperty="Color" To="#E1DFDD" Duration="0:0:0.2"/>
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </Trigger.ExitActions>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Track" Property="BorderBrush" Value="White"/>
+                                <Setter TargetName="Track" Property="BorderBrush" Value="#006C70"/>
                             </Trigger>
                             <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="Track" Property="BorderBrush" Value="Orange"/>
+                                <Setter TargetName="Track" Property="BorderBrush" Value="#008489"/>
                                 <Setter TargetName="Track" Property="BorderThickness" Value="2"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
@@ -111,27 +181,28 @@
         </Style>
         <Style x:Key="SettingsInput" TargetType="TextBox">
             <Setter Property="Height" Value="26"/>
-            <Setter Property="Margin" Value="10"/>
+            <Setter Property="Margin" Value="10,7"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Background" Value="#182D5A"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="CaretBrush" Value="White"/>
-            <Setter Property="BorderBrush" Value="#879DC6"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#323130"/>
+            <Setter Property="CaretBrush" Value="#323130"/>
+            <Setter Property="BorderBrush" Value="#8A8886"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="4,0"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
                         <Border x:Name="InputBorder" Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="0">
                             <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="InputBorder" Property="BorderBrush" Value="White"/>
+                                <Setter TargetName="InputBorder" Property="BorderBrush" Value="#605E5C"/>
                             </Trigger>
                             <Trigger Property="IsKeyboardFocusWithin" Value="True">
-                                <Setter TargetName="InputBorder" Property="BorderBrush" Value="Orange"/>
+                                <Setter TargetName="InputBorder" Property="BorderBrush" Value="#008489"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.5"/>
@@ -141,10 +212,218 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style x:Key="SettingsCaption" TargetType="ContentControl">
+            <Setter Property="Foreground" Value="#243B53"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ContentControl">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <ContentPresenter Grid.Column="0" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <Line Grid.Column="1" X1="0" Y1="0" X2="1" Y2="0" Stretch="Fill"
+                                  Stroke="#AAB8C6" StrokeThickness="1" StrokeDashArray="1,3" VerticalAlignment="Bottom" Margin="0,0,0,2"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="SettingsLookupButton" TargetType="Button">
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#008489"/>
+            <Setter Property="BorderBrush" Value="#8A8886"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="FontSize" Value="19"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="LookupBorder" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-6,0,0"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="LookupBorder" Property="Background" Value="#E5F3F3"/>
+                                <Setter TargetName="LookupBorder" Property="BorderBrush" Value="#008489"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="LookupBorder" Property="BorderBrush" Value="#008489"/>
+                                <Setter TargetName="LookupBorder" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="BusinessCentralActionButton" TargetType="Button">
+            <Setter Property="MinWidth" Value="140"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="16,0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Background" Value="#008489"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#008489"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Border x:Name="ActionSurface" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                            </Border>
+                            <Border x:Name="FocusOutline" BorderBrush="White" BorderThickness="1" Margin="3"
+                                    Visibility="Collapsed" IsHitTestVisible="False"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ActionSurface" Property="Background" Value="#006C70"/>
+                                <Setter TargetName="ActionSurface" Property="BorderBrush" Value="#006C70"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="ActionSurface" Property="Background" Value="#00575B"/>
+                                <Setter TargetName="ActionSurface" Property="BorderBrush" Value="#00575B"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="FocusOutline" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="ActionSurface" Property="Background" Value="#E1E5E8"/>
+                                <Setter TargetName="ActionSurface" Property="BorderBrush" Value="#E1E5E8"/>
+                                <Setter Property="Foreground" Value="#69747D"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="BusinessCentralSecondaryButton" TargetType="Button">
+            <Setter Property="MinWidth" Value="140"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#008489"/>
+            <Setter Property="BorderBrush" Value="#008489"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ActionSurface" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ActionSurface" Property="Background" Value="#E5F3F3"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="ActionSurface" Property="Background" Value="#D3EBEB"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="ActionSurface" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="ActionSurface" Property="Background" Value="#E1E5E8"/>
+                                <Setter TargetName="ActionSurface" Property="BorderBrush" Value="#E1E5E8"/>
+                                <Setter Property="Foreground" Value="#69747D"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="Button" BasedOn="{StaticResource BusinessCentralSecondaryButton}"/>
+        <Style TargetType="Label">
+            <Setter Property="Foreground" Value="#243B53"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        <Style x:Key="ReadOnlyField" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#CCD7E2"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="5"/>
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#323130"/>
+            <Setter Property="BorderBrush" Value="#8A8886"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="4,0"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#605E5C"/>
+                </Trigger>
+                <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                    <Setter Property="BorderBrush" Value="#008489"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="#323130"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Style.Triggers>
+                <Trigger Property="IsHighlighted" Value="True">
+                    <Setter Property="Background" Value="#E5F3F3"/>
+                    <Setter Property="Foreground" Value="#006C70"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="ListView">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#323130"/>
+            <Setter Property="BorderBrush" Value="#CCD7E2"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style TargetType="ListViewItem">
+            <Setter Property="Foreground" Value="#323130"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#EBF1F4"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#E5F3F3"/>
+                    <Setter Property="Foreground" Value="#006C70"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="ProgressBar">
+            <Setter Property="Background" Value="#E1E5E8"/>
+            <Setter Property="Foreground" Value="#008489"/>
+            <Setter Property="BorderBrush" Value="#CCD7E2"/>
+        </Style>
+        <Style x:Key="PlaceholderMessage" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#69747D"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
     </Window.Resources>
 
     <!-- Body 2x2 -->
-    <Grid Background="Navy">
+    <Grid Background="#F4F7FA" TextElement.Foreground="#323130">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="200"/>
             <ColumnDefinition />
@@ -155,6 +434,8 @@
             <RowDefinition />
         </Grid.RowDefinitions>
 
+        <Border Grid.Column="0" Grid.RowSpan="2" Background="#F8FAFC" BorderBrush="#CCD7E2" BorderThickness="0,1,1,1"/>
+
         <!-- App title -->
         <TextBlock Grid.Row="0" Grid.Column="0"
                    Text="BC Manager"
@@ -162,8 +443,8 @@
                    HorizontalAlignment="Left"
                    Margin="20,0,0,0"
                    FontSize="20"
-                   FontWeight="Bold"
-                   Foreground="White"/>
+                   FontWeight="SemiBold"
+                   Foreground="#243B53"/>
 
 
         <!-- Topics Container -->
@@ -176,157 +457,38 @@
             <RadioButton x:Name="AppManagementTopic"
                          Tag="AppManagementTabs"
                          Content="App Management"
-                         Height="50"
-                         FontSize="14"
-                         Foreground="White"
+                         Style="{StaticResource TopicNavigationButton}"
                          IsChecked="true">
-
-                <RadioButton.Template>
-                    <ControlTemplate TargetType="RadioButton">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition />
-                            </Grid.ColumnDefinitions>
-                            <Border x:Name="border" BorderBrush="CornflowerBlue" BorderThickness="3" Visibility="Collapsed" />
-                            <Border Grid.ColumnSpan="2" Background="Transparent">
-                                <ContentPresenter Content="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="border" Property="Visibility" Value="Visible" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </RadioButton.Template>
             </RadioButton>
 
             <!-- License Management topic -->
             <RadioButton x:Name="ServerManagementTopic"
                          Tag="ServerManagementTabs"
                          Content="Server Management"
-                         Height="50"
-                         FontSize="14"
-                         Foreground="White">
-
-                <RadioButton.Template>
-                    <ControlTemplate TargetType="RadioButton">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition />
-                            </Grid.ColumnDefinitions>
-                            <Border x:Name="border" BorderBrush="CornflowerBlue" BorderThickness="3" Visibility="Collapsed" />
-                            <Border Grid.ColumnSpan="2" Background="Transparent">
-                                <ContentPresenter Content="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="border" Property="Visibility" Value="Visible" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </RadioButton.Template>
+                         Style="{StaticResource TopicNavigationButton}">
             </RadioButton>
 
             <!-- Container Management topic -->
             <RadioButton x:Name="ContainerManagementTopic"
                          Tag="ContainerManagementTabs"
                          Content="Container Management"
-                         Height="50"
-                         FontSize="14"
-                         Foreground="White">
-
-                <RadioButton.Template>
-                    <ControlTemplate TargetType="RadioButton">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition />
-                            </Grid.ColumnDefinitions>
-                            <Border x:Name="border" BorderBrush="CornflowerBlue" BorderThickness="3" Visibility="Collapsed" />
-                            <Border Grid.ColumnSpan="2" Background="Transparent">
-                                <ContentPresenter Content="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="border" Property="Visibility" Value="Visible" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </RadioButton.Template>
+                         Style="{StaticResource TopicNavigationButton}">
             </RadioButton>
 
             <!-- Settings topic -->
             <RadioButton x:Name="SettingsTopic"
                          Tag="SettingsTabs"
                          Content="Settings"
-                         Height="50"
-                         FontSize="14"
-                         Foreground="White">
-
-                <RadioButton.Template>
-                    <ControlTemplate TargetType="RadioButton">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition />
-                            </Grid.ColumnDefinitions>
-                            <Border x:Name="border" BorderBrush="CornflowerBlue" BorderThickness="3" Visibility="Collapsed" />
-                            <Border Grid.ColumnSpan="2" Background="Transparent">
-                                <ContentPresenter Content="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="border" Property="Visibility" Value="Visible" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </RadioButton.Template>
+                         Style="{StaticResource TopicNavigationButton}">
             </RadioButton>
 
             <!-- About topic -->
             <RadioButton x:Name="AboutTopic"
                          Tag="AboutContent"
                          Content="About"
-                         Height="50"
-                         FontSize="14"
-                         Foreground="White">
-
-                <RadioButton.Template>
-                    <ControlTemplate TargetType="RadioButton">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition />
-                            </Grid.ColumnDefinitions>
-                            <Border x:Name="border" BorderBrush="CornflowerBlue" BorderThickness="3" Visibility="Collapsed" />
-                            <Border Grid.ColumnSpan="2" Background="Transparent">
-                                <ContentPresenter Content="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="border" Property="Visibility" Value="Visible" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </RadioButton.Template>
+                         Style="{StaticResource TopicNavigationButton}">
             </RadioButton>
         </StackPanel>
-
-        <!-- Splitter -->
-        <Rectangle Grid.Column="1" 
-                   Grid.Row="1" 
-                   Width="2" 
-                   VerticalAlignment="Stretch"
-                   Margin="0,15,0,15"
-                   Fill="White" 
-                   HorizontalAlignment="Left"/>
 
         <!-- Topics Tab Container -->
         <Grid x:Name="TopicsTabContainer"
@@ -336,18 +498,15 @@
 
             <!-- App Management tab control -->
             <TabControl x:Name="AppManagementTabs" 
-                        Background="Navy"
-                        BorderThickness="0"
                         Margin="10,0,0,0">
 
                 <!-- App Publishing tab -->
                 <TabItem Header="App Publishing" 
-                         Background="Navy" 
-                         Foreground="White" 
                          Height="50"
                          FontSize="14">
 
-                    <Grid Margin="15,30,0,0">
+                    <Border Margin="10,16,20,12" Padding="20,14" Background="#F8FAFC" BorderBrush="#CCD7E2" BorderThickness="1" CornerRadius="6">
+                    <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="auto"/>
                             <RowDefinition/>
@@ -366,17 +525,17 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,10">
-                                <Label Content="Server Instance" VerticalAlignment="Center" Foreground="White" Width="120"/>
+                                <Label Content="Server Instance" VerticalAlignment="Center" Width="120"/>
 
-                                <ComboBox Width="210" Height="28" x:Name="AppPublishingServerInstanceComboBox">
+                                <ComboBox Width="210" Height="32" x:Name="AppPublishingServerInstanceComboBox">
                                     <ComboBox.Items></ComboBox.Items>
                                 </ComboBox>
                             </StackPanel>
 
                             <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,10">
-                                <Label Content="Sync Mode" VerticalAlignment="Center" Foreground="White" Width="120"/>
+                                <Label Content="Sync Mode" VerticalAlignment="Center" Width="120"/>
 
-                                <ComboBox Width="210" SelectedIndex="0" Height="28" x:Name="AppPublishingSyncModeComboBox">
+                                <ComboBox Width="210" SelectedIndex="0" Height="32" x:Name="AppPublishingSyncModeComboBox">
                                     <ComboBox.Items>
                                         <ComboBoxItem>Add (default)</ComboBoxItem>
                                         <ComboBoxItem>Development</ComboBoxItem>
@@ -386,28 +545,24 @@
                             </StackPanel>
 
                             <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal">
-                                <Label Content="Choose App" VerticalAlignment="Center" Foreground="White" Width="120"/>
+                                <Label Content="Choose App" VerticalAlignment="Center" Width="120"/>
 
                                 <Button VerticalAlignment="Center" 
-                                        Foreground="Black"
                                         Width="210"
-                                        Height="28"
+                                    Height="32"
                                         Content="Choose"
-                                        Background="LightGray"
                                         x:Name="AppPublishingChooseAppBtn">
                                 </Button>
                             </StackPanel>
 
                             <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
-                                <Label Content="Upload App" VerticalAlignment="Center" Foreground="White" Width="120"/>
+                                <Label Content="Upload App" VerticalAlignment="Center" Width="120"/>
 
                                 <Button VerticalAlignment="Center" 
-                                        Foreground="Black"
                                         Width="210"
-                                        Height="28"
+                                    Height="32"
                                         Content="Send"
-                                        Background="LightGray" 
-                                        FontWeight="Bold"
+                                    Style="{StaticResource BusinessCentralActionButton}"
                                         x:Name="AppPublishingSendAppBtn">
                                 </Button>
                             </StackPanel>
@@ -434,41 +589,41 @@
                             </Grid.ColumnDefinitions>
 
                             <DockPanel Grid.Row="0" Grid.Column="0" Margin="0,0,20,10" Style="{StaticResource DockPanelStyle}">
-                                <Label Content="Name" VerticalAlignment="Center" Foreground="White" Width="60"/>
+                                <Label Content="Name" VerticalAlignment="Center" Width="60"/>
 
-                                <Border BorderBrush="White" BorderThickness="1" CornerRadius="4" Padding="5">
+                                <Border Style="{StaticResource ReadOnlyField}">
                                     <TextBlock VerticalAlignment="Center" x:Name="AppPublishingAppNameTxt"></TextBlock>
                                 </Border>
                             </DockPanel>
 
                             <DockPanel Grid.Row="1" Grid.Column="0" Margin="0,0,20,0" Style="{StaticResource DockPanelStyle}">
-                                <Label Content="App ID" VerticalAlignment="Center" Foreground="White" Width="60" />
+                                <Label Content="App ID" VerticalAlignment="Center" Width="60" />
 
-                                <Border BorderBrush="White" BorderThickness="1" CornerRadius="4" Padding="5">
+                                <Border Style="{StaticResource ReadOnlyField}">
                                     <TextBlock VerticalAlignment="Center" x:Name="AppPublishingAppIdTxt"></TextBlock>
                                 </Border>
                             </DockPanel>
 
                             <DockPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,10" Style="{StaticResource DockPanelStyle}">
-                                <Label Content="Version" VerticalAlignment="Center" Foreground="White" Width="70"/>
+                                <Label Content="Version" VerticalAlignment="Center" Width="70"/>
 
-                                <Border BorderBrush="White" BorderThickness="1" CornerRadius="4" Padding="5">
+                                <Border Style="{StaticResource ReadOnlyField}">
                                     <TextBlock VerticalAlignment="Center" x:Name="AppPublishingAppVersionTxt"></TextBlock>
                                 </Border>
                             </DockPanel>
 
                             <DockPanel Grid.Row="1" Grid.Column="1" Style="{StaticResource DockPanelStyle}">
-                                <Label Content="Publisher" VerticalAlignment="Center" Foreground="White" Width="70"/>
+                                <Label Content="Publisher" VerticalAlignment="Center" Width="70"/>
 
-                                <Border BorderBrush="White" BorderThickness="1" CornerRadius="4" Padding="5">
+                                <Border Style="{StaticResource ReadOnlyField}">
                                     <TextBlock VerticalAlignment="Center" x:Name="AppPublishingAppPublisherTxt"></TextBlock>
                                 </Border>
                             </DockPanel>
 
                             <DockPanel Grid.Row="2" Grid.ColumnSpan="2" Margin="0,20,0,0" Style="{StaticResource DockPanelStyle}">
-                                <Label Content="Path" VerticalAlignment="Center" Foreground="White" Width="60"/>
+                                <Label Content="Path" VerticalAlignment="Center" Width="60"/>
 
-                                <Border BorderBrush="White" BorderThickness="1" CornerRadius="4" Padding="5">
+                                <Border Style="{StaticResource ReadOnlyField}">
                                     <TextBlock VerticalAlignment="Center" x:Name="AppPublishingAppPathTxt" TextWrapping="Wrap"></TextBlock>
                                 </Border>
                             </DockPanel>
@@ -476,21 +631,21 @@
                             <!-- Progress Bar -->
                             <StackPanel Grid.Row="3" Grid.ColumnSpan="2" VerticalAlignment="Bottom" Margin="0,0,0,30" x:Name="AppPublishingProgress" Visibility="Hidden" IsEnabled="False">
                                 <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,0,0,10" x:Name="AppPublishingProgressInfoTxt">Working on it...</TextBlock>
-                                <ProgressBar Width="600" Height="20" x:Name="AppPublishingProgressBar" Value="0" Foreground="Orange"/>
+                                <ProgressBar Width="600" Height="20" x:Name="AppPublishingProgressBar" Value="0"/>
                             </StackPanel>
                         </Grid>
                     </Grid>
+                    </Border>
                 </TabItem>
 
                 <!-- Multiple App Publishing tab -->
                 <TabItem
                 Header="Multiple App Publishing"
-                Background="Navy" 
-                Foreground="White" 
                 Height="50"
                 FontSize="14">
 
-                    <Grid Margin="15,30,0,0">
+                    <Border Margin="10,16,20,12" Padding="20,14" Background="#F8FAFC" BorderBrush="#CCD7E2" BorderThickness="1" CornerRadius="6">
+                    <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="auto"/>
                             <RowDefinition/>
@@ -509,17 +664,17 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,10">
-                                <Label Content="Server Instance" VerticalAlignment="Center" Foreground="White" Width="140"/>
+                                <Label Content="Server Instance" VerticalAlignment="Center" Width="140"/>
 
-                                <ComboBox Width="210" Height="28" x:Name="MultipleAppPublishingServerInstanceComboBox">
+                                <ComboBox Width="210" Height="32" x:Name="MultipleAppPublishingServerInstanceComboBox">
                                     <ComboBox.Items></ComboBox.Items>
                                 </ComboBox>
                             </StackPanel>
 
                             <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,10">
-                                <Label Content="Sync Mode" VerticalAlignment="Center" Foreground="White" Width="120"/>
+                                <Label Content="Sync Mode" VerticalAlignment="Center" Width="120"/>
 
-                                <ComboBox Width="210" SelectedIndex="0" Height="28" x:Name="MultipleAppPublishingSyncModeComboBox">
+                                <ComboBox Width="210" SelectedIndex="0" Height="32" x:Name="MultipleAppPublishingSyncModeComboBox">
                                     <ComboBox.Items>
                                         <ComboBoxItem>Add (default)</ComboBoxItem>
                                         <ComboBoxItem>Development</ComboBoxItem>
@@ -529,28 +684,24 @@
                             </StackPanel>
 
                             <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal">
-                                <Label Content="Choose App Folder" VerticalAlignment="Center" Foreground="White" Width="140"/>
+                                <Label Content="Choose App Folder" VerticalAlignment="Center" Width="140"/>
 
                                 <Button VerticalAlignment="Center" 
-                                        Foreground="Black"
                                         Width="210"
-                                        Height="28"
+                                    Height="32"
                                         Content="Choose"
-                                        Background="LightGray"
                                         x:Name="MultipleAppPublishingChooseAppBtn">
                                 </Button>
                             </StackPanel>
 
                             <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
-                                <Label Content="Upload App" VerticalAlignment="Center" Foreground="White" Width="120"/>
+                                <Label Content="Upload App" VerticalAlignment="Center" Width="120"/>
 
                                 <Button VerticalAlignment="Center" 
-                                        Foreground="Black"
                                         Width="210"
-                                        Height="28"
+                                    Height="32"
                                         Content="Send"
-                                        Background="LightGray" 
-                                        FontWeight="Bold"
+                                    Style="{StaticResource BusinessCentralActionButton}"
                                         x:Name="MultipleAppPublishingSendAppBtn">
                                 </Button>
                             </StackPanel>
@@ -571,8 +722,8 @@
 
                             <StackPanel>
                                 <DockPanel Style="{StaticResource DockPanelStyle}" Margin="0,0,0,20">
-                                    <Label Content="Folder Path" VerticalAlignment="Center" Foreground="White" Width="80" />
-                                    <Border BorderBrush="White" BorderThickness="1" CornerRadius="4" Padding="5">
+                                    <Label Content="Folder Path" VerticalAlignment="Center" Width="80" />
+                                    <Border Style="{StaticResource ReadOnlyField}">
                                         <TextBlock VerticalAlignment="Center" x:Name="MultipleAppPublishingAppPathTxt" TextWrapping="Wrap" />
                                     </Border>
                                 </DockPanel>
@@ -583,13 +734,19 @@
                                             <GridView AllowsColumnReorder="False">
                                                 <GridView.ColumnHeaderContainerStyle>
                                                     <Style TargetType="{x:Type GridViewColumnHeader}">
-                                                        <Setter Property="HorizontalContentAlignment" Value="Center" />
-                                                        <Setter Property="FontWeight" Value="Bold"/>
+                                                        <Setter Property="Background" Value="#EBF1F4"/>
+                                                        <Setter Property="Foreground" Value="#243B53"/>
+                                                        <Setter Property="BorderBrush" Value="#CCD7E2"/>
+                                                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                                        <Setter Property="Padding" Value="8,6"/>
+                                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                                        <Setter Property="FontWeight" Value="SemiBold"/>
                                                         <Setter Property="Template">
                                                             <Setter.Value>
                                                                 <ControlTemplate TargetType="{x:Type GridViewColumnHeader}">
-                                                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="0" Padding="2">
-                                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                                                            BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}">
+                                                                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
                                                                     </Border>
                                                                 </ControlTemplate>
                                                             </Setter.Value>
@@ -597,9 +754,9 @@
                                                     </Style>
                                                 </GridView.ColumnHeaderContainerStyle>
 
-                                                <GridViewColumn Header="App Name" Width="500" DisplayMemberBinding="{Binding AppName}" />
-                                                <GridViewColumn Header="App Version" Width="200" DisplayMemberBinding="{Binding AppVersion}" />
-                                                <GridViewColumn Header="Status" Width="55">
+                                                <GridViewColumn Header="App Name" Width="450" DisplayMemberBinding="{Binding AppName}" />
+                                                <GridViewColumn Header="App Version" Width="165" DisplayMemberBinding="{Binding AppVersion}" />
+                                                <GridViewColumn Header="Status" Width="80">
                                                     <GridViewColumn.CellTemplate>
                                                         <DataTemplate>
                                                             <TextBlock Text="{Binding Status}">
@@ -630,28 +787,26 @@
                             <!-- Progress Bar -->
                             <StackPanel Grid.Row="1" VerticalAlignment="Bottom" Margin="0,0,0,30" x:Name="MultipleAppPublishingProgress" Visibility="Hidden" IsEnabled="False">
                                 <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,0,0,10" x:Name="MultipleAppPublishingProgressInfoTxt">Working on it...</TextBlock>
-                                <ProgressBar Width="600" Height="20" x:Name="MultipleAppPublishingProgressBar" Value="0" Foreground="Orange"/>
+                                <ProgressBar Width="600" Height="20" x:Name="MultipleAppPublishingProgressBar" Value="0"/>
                             </StackPanel>
                         </Grid>
                     </Grid>
+                    </Border>
                 </TabItem>
             </TabControl>
 
             <!-- Server Management tab control -->
             <TabControl x:Name="ServerManagementTabs" 
-                        Background="Navy"
-                        BorderThickness="0"
                         Margin="10,0,0,0"
                         Visibility="Hidden" 
                         IsEnabled="False">
 
                 <TabItem Header="License Management" 
-                         Background="Navy" 
-                         Foreground="White" 
                          Height="50"
                          FontSize="14">
 
-                    <Grid Margin="15,30,20,0">
+                    <Border Margin="10,16,20,12" Padding="20,14" Background="#F8FAFC" BorderBrush="#CCD7E2" BorderThickness="1" CornerRadius="6">
+                    <Grid>
                         <Grid.Resources>
                             <Style TargetType="DockPanel" x:Key="DockPanelStyle">
                                 <Setter Property="TextElement.FontSize" Value="12"/>
@@ -670,30 +825,28 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,10">
-                            <Label Content="Server Instance" VerticalAlignment="Center" Foreground="White" Width="120"/>
+                            <Label Content="Server Instance" VerticalAlignment="Center" Width="120"/>
 
-                            <ComboBox Width="210" Height="28" x:Name="LicenseServerInstanceComboBox">
+                            <ComboBox Width="210" Height="32" x:Name="LicenseServerInstanceComboBox">
                                 <ComboBox.Items></ComboBox.Items>
                             </ComboBox>
                         </StackPanel>
 
                         <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,10">
-                            <Label Content="License" VerticalAlignment="Center" Foreground="White" Width="70"/>
+                            <Label Content="License" VerticalAlignment="Center" Width="70"/>
 
                             <Button VerticalAlignment="Center" 
-				                    Foreground="Black"
 				                    Width="210"
-				                    Height="28"
+                                    Height="32"
 				                    Content="Choose"
-				                    Background="LightGray"
 				                    x:Name="LicenseChooseBtn">
                             </Button>
                         </StackPanel>
 
                         <DockPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,20,0,0" Style="{StaticResource DockPanelStyle}">
-                            <Label Content="Path" VerticalAlignment="Center" Foreground="White" Width="60"/>
+                            <Label Content="Path" VerticalAlignment="Center" Width="60"/>
 
-                            <Border BorderBrush="White" BorderThickness="1" CornerRadius="4" Padding="5">
+                            <Border Style="{StaticResource ReadOnlyField}">
                                 <TextBlock VerticalAlignment="Center" x:Name="LicensePathTxt" TextWrapping="Wrap"></TextBlock>
                             </Border>
                         </DockPanel>
@@ -703,183 +856,134 @@
                                     Margin="0,30,0,0">
 
                             <Button VerticalAlignment="Center"                                    
-                                    Foreground="Black"
                                     Width="400"
                                     Height="40"
                                     Content="Load license &amp; restart instance"
-                                    FontWeight="Bold"
-                                    Background="LightGray"
+                                    Style="{StaticResource BusinessCentralActionButton}"
                                     x:Name="LoadBcLicenseBtn">
-
-                                <Button.Template>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}"
-                                            BorderBrush="{TemplateBinding BorderBrush}"
-                                            BorderThickness="{TemplateBinding BorderThickness}"
-                                            CornerRadius="6">
-                                            <ContentPresenter HorizontalAlignment="Center"
-                                                              VerticalAlignment="Center"/>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Button.Template>
                             </Button>
 
                             <Button VerticalAlignment="Center"
                                     Margin="0,10,0,0"
-                                    Foreground="Black"
                                     Width="400"
                                     Height="40"
                                     Content="Get current license information"
-                                    Background="LightGray"
                                     x:Name="GetCurrentBcLicenseInfoBtn">
-
-                                <Button.Template>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}"
-                                            BorderBrush="{TemplateBinding BorderBrush}"
-                                            BorderThickness="{TemplateBinding BorderThickness}"
-                                            CornerRadius="6">
-                                            <ContentPresenter HorizontalAlignment="Center"
-                                                              VerticalAlignment="Center"/>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Button.Template>
                             </Button>
                         </StackPanel>                        
                     </Grid>
+                    </Border>
                 </TabItem>
             </TabControl>
 
             <!-- Container Management tab control -->
             <TabControl x:Name="ContainerManagementTabs" 
-                        Background="Navy"
-                        BorderThickness="0"
                         Margin="10,0,0,0"
                         Visibility="Hidden"
                         IsEnabled="False">
 
                 <TabItem Header="App Publishing" 
-                         Background="Navy" 
-                         Foreground="White" 
                          Height="50"
                          FontSize="14">
 
-                    <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center">COMING SOON</TextBlock>
+                    <TextBlock Style="{StaticResource PlaceholderMessage}">COMING SOON</TextBlock>
                 </TabItem>
 
                 <TabItem Header="Multiple App Publishing" 
-                         Background="Navy" 
-                         Foreground="White" 
                          Height="50"
                          FontSize="14">
 
-                    <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center">COMING SOON</TextBlock>
+                    <TextBlock Style="{StaticResource PlaceholderMessage}">COMING SOON</TextBlock>
                 </TabItem>
 
                 <TabItem Header="License Management" 
-                         Background="Navy" 
-                         Foreground="White" 
                          Height="50"
                          FontSize="14">
 
-                    <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center">COMING SOON</TextBlock>
+                    <TextBlock Style="{StaticResource PlaceholderMessage}">COMING SOON</TextBlock>
                 </TabItem>
             </TabControl>
 
             <!-- Settings tab control -->
             <TabControl x:Name="SettingsTabs" 
-                        Background="Navy"
-                        BorderThickness="0"
                         Margin="10,0,0,0"
                         Visibility="Hidden"
                         IsEnabled="False">
 
                 <TabItem Header="General" 
-                         Background="Navy" 
-                         Foreground="White" 
                          Height="50"
                          FontSize="14">
 
-                    <Grid Margin="15,30,20,0">
-                        
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition />
-                        </Grid.RowDefinitions>
-                        
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
+                    <Border Margin="10,16,20,12" Padding="20,14" Background="#F8FAFC" BorderBrush="#CCD7E2" BorderThickness="1" CornerRadius="6">
+                        <Grid>
 
-                        <TextBlock Text="Application version" Grid.Row="0" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="ApplicationVersion" Grid.Row="0" Grid.Column="1" Margin="10" VerticalAlignment="Center" FontSize="15" FontWeight="SemiBold" Foreground="White"/>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
 
-                        <TextBlock Text="Hide PowerShell console" Grid.Row="1" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
-                        <CheckBox x:Name="HidePowerShellConsole" Grid.Row="1" Grid.Column="1" Style="{StaticResource SettingsSwitch}" AutomationProperties.Name="Hide PowerShell console"/>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="390"/>
+                            </Grid.ColumnDefinitions>
 
-                        <TextBlock Text="NavAdminTool path" Grid.Row="2" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
-                        <TextBox x:Name="NavAdminTool" Grid.Row="2" Grid.Column="1" Style="{StaticResource SettingsInput}"/>
+                            <ContentControl Content="NavAdminTool path" Grid.Row="0" Grid.Column="0" Style="{StaticResource SettingsCaption}"/>
+                            <Grid Grid.Row="0" Grid.Column="1" Margin="10,7,10,7">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="32"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="NavAdminTool" Grid.Column="0" Style="{StaticResource SettingsInput}" Margin="0"
+                                         AutomationProperties.Name="NavAdminTool path" ToolTip="Path to NavAdminTool.ps1; leave blank to use the detected installation."/>
+                                <Button x:Name="NavAdminToolBrowseBtn" Grid.Column="2" Style="{StaticResource SettingsLookupButton}"
+                                        Content="&#x2026;" AutomationProperties.Name="Browse for NavAdminTool.ps1" ToolTip="Choose NavAdminTool.ps1"/>
+                            </Grid>
 
-                        <TextBlock Text="Supported BC version" Grid.Row="3" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
-                        <TextBox x:Name="SupportedBusinessCentralVersion" Grid.Row="3" Grid.Column="1" Style="{StaticResource SettingsInput}"/>
+                                <ContentControl Content="Supported BC version" Grid.Row="1" Grid.Column="0" Style="{StaticResource SettingsCaption}"/>
+                                <TextBox x:Name="SupportedBusinessCentralVersion" Grid.Row="1" Grid.Column="1" Style="{StaticResource SettingsInput}"/>
 
-                        <TextBlock Text="Tenant ID" Grid.Row="4" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
-                        <TextBox x:Name="TenantId" Grid.Row="4" Grid.Column="1" Style="{StaticResource SettingsInput}"/>
+                                <ContentControl Content="Tenant ID" Grid.Row="2" Grid.Column="0" Style="{StaticResource SettingsCaption}"/>
+                                <TextBox x:Name="TenantId" Grid.Row="2" Grid.Column="1" Style="{StaticResource SettingsInput}"/>
 
-                        <TextBlock Text="Unpublish old app after upgrade" Grid.Row="5" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
-                        <CheckBox x:Name="UnpublishLastInstalledAppDuringUpgrade" Grid.Row="5" Grid.Column="1" Style="{StaticResource SettingsSwitch}" AutomationProperties.Name="Unpublish old app after upgrade" ToolTip="Only if no tenant still uses the old version."/>
+                                <ContentControl Content="Hide PowerShell console" Grid.Row="3" Grid.Column="0" Style="{StaticResource SettingsCaption}"/>
+                                <CheckBox x:Name="HidePowerShellConsole" Grid.Row="3" Grid.Column="1" Style="{StaticResource SettingsSwitch}" AutomationProperties.Name="Hide PowerShell console"/>
 
-                        <TextBlock Text="Check BCContainerHelper updates on tab open" Grid.Row="6" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
-                        <CheckBox x:Name="SearchForUpdateBcContainerHelper" Grid.Row="6" Grid.Column="1" Style="{StaticResource SettingsSwitch}" AutomationProperties.Name="Check BCContainerHelper updates on tab open" ToolTip="Checks when opening Container Management and asks before updating."/>
+                                <ContentControl Content="Unpublish old app after upgrade" Grid.Row="4" Grid.Column="0" Style="{StaticResource SettingsCaption}"/>
+                                <CheckBox x:Name="UnpublishLastInstalledAppDuringUpgrade" Grid.Row="4" Grid.Column="1" Style="{StaticResource SettingsSwitch}" AutomationProperties.Name="Unpublish old app after upgrade" ToolTip="Only if no tenant still uses the old version."/>
 
-                        <TextBlock Text="Update app at startup" Grid.Row="7" Grid.Column="0" Margin="10" VerticalAlignment="Center"/>
-                        <CheckBox x:Name="CheckForApplicationUpdateOnStart" Grid.Row="7" Grid.Column="1" Style="{StaticResource SettingsSwitch}" AutomationProperties.Name="Update app at startup"/>
+                                <ContentControl Content="Check BCContainerHelper updates on tab open" Grid.Row="5" Grid.Column="0" Style="{StaticResource SettingsCaption}"/>
+                                <CheckBox x:Name="SearchForUpdateBcContainerHelper" Grid.Row="5" Grid.Column="1" Style="{StaticResource SettingsSwitch}" AutomationProperties.Name="Check BCContainerHelper updates on tab open" ToolTip="Checks when opening Container Management and asks before updating."/>
 
-                        <Button VerticalAlignment="Bottom"
-                            Grid.Row="8"
-                                Grid.ColumnSpan="2"
-                                Margin="0,10,0,30"
-                                Foreground="#101D3B"
-                                FontWeight="SemiBold"
-                                Width="400"
-                                Height="40"
-                                Content="Save &amp; Restart"
-                                Background="Orange"
-                                x:Name="SettingsSaveBtn">
+                                <ContentControl Content="Update app at startup" Grid.Row="6" Grid.Column="0" Style="{StaticResource SettingsCaption}"/>
+                                <CheckBox x:Name="CheckForApplicationUpdateOnStart" Grid.Row="6" Grid.Column="1" Style="{StaticResource SettingsSwitch}" AutomationProperties.Name="Update app at startup"/>
 
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}"
-                                            BorderBrush="{TemplateBinding BorderBrush}"
-                                            BorderThickness="{TemplateBinding BorderThickness}"
-                                            CornerRadius="4">
-                                        <ContentPresenter HorizontalAlignment="Center"
-                                                          VerticalAlignment="Center"/>
-                                    </Border>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
-                        
-                    </Grid>
+                                <Button x:Name="SettingsSaveBtn" Grid.Row="7" Grid.ColumnSpan="2" Margin="0,10,10,0"
+                                    VerticalAlignment="Bottom" HorizontalAlignment="Right"
+                                    Style="{StaticResource BusinessCentralActionButton}" Content="Save &amp; Restart"/>
+
+                        </Grid>
+                    </Border>
                 </TabItem>
             </TabControl>
 
                 <!-- About view -->
-                <Grid x:Name="AboutContent"
-                        Background="Navy"
+                <TabControl x:Name="AboutContent"
                         Margin="10,0,0,0"
                         Visibility="Hidden"
                         IsEnabled="False">
 
-                    <Grid Margin="36,30,36,24">
+                <TabItem Header="Overview"
+                         Height="50"
+                         FontSize="14">
+                    <Border Margin="10,16,20,12" Padding="20,14" Background="#F8FAFC" BorderBrush="#CCD7E2" BorderThickness="1" CornerRadius="6">
+                    <Grid Margin="16,10,16,8">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
@@ -891,8 +995,8 @@
                         </Grid.RowDefinitions>
 
                         <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,0,0,28">
-                            <TextBlock Text="Business Central Manager" FontSize="28" FontWeight="SemiBold" Foreground="White" TextAlignment="Center"/>
-                            <TextBlock Text="BUSINESS CENTRAL / ON-PREMISES" FontSize="11" FontWeight="SemiBold" Foreground="#ACC2E8" TextAlignment="Center" Margin="0,7,0,0"/>
+                            <TextBlock Text="Business Central Manager" FontSize="28" FontWeight="SemiBold" Foreground="#243B53" TextAlignment="Center"/>
+                            <TextBlock Text="BUSINESS CENTRAL / ON-PREMISES" FontSize="11" FontWeight="SemiBold" Foreground="#69747D" TextAlignment="Center" Margin="0,7,0,0"/>
                         </StackPanel>
 
                         <Grid Grid.Row="1" HorizontalAlignment="Center">
@@ -901,23 +1005,23 @@
                                 <ColumnDefinition Width="185" />
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-                                <TextBlock Text="VERSION" FontSize="11" FontWeight="SemiBold" Foreground="#ACC2E8" TextAlignment="Center" Margin="0,0,0,6"/>
-                                <TextBlock x:Name="VersionTextBlock" FontSize="15" Foreground="White" TextAlignment="Center">
+                                <TextBlock Text="VERSION" FontSize="11" FontWeight="SemiBold" Foreground="#69747D" TextAlignment="Center" Margin="0,0,0,6"/>
+                                <TextBlock x:Name="VersionTextBlock" FontSize="15" Foreground="#243B53" TextAlignment="Center">
                                     <Run x:Name="AboutTabDisplayVersionTxt"/>
                                 </TextBlock>
                             </StackPanel>
                             <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-                                <TextBlock Text="CREATED BY" FontSize="11" FontWeight="SemiBold" Foreground="#ACC2E8" TextAlignment="Center" Margin="0,0,0,6"/>
-                                <TextBlock x:Name="AuthorTextBlock" Text="Uglješa Ćirić" FontSize="15" Foreground="White" TextAlignment="Center"/>
+                                <TextBlock Text="CREATED BY" FontSize="11" FontWeight="SemiBold" Foreground="#69747D" TextAlignment="Center" Margin="0,0,0,6"/>
+                                <TextBlock x:Name="AuthorTextBlock" Text="Uglješa Ćirić" FontSize="15" Foreground="#243B53" TextAlignment="Center"/>
                             </StackPanel>
                         </Grid>
 
-                        <Border Grid.Row="2" Height="1" Background="#445B90" Margin="50,28,50,24"/>
+                        <Border Grid.Row="2" Height="1" Background="#CCD7E2" Margin="50,28,50,24"/>
 
-                        <TextBlock x:Name="DescriptionTextBlock" Grid.Row="3" FontSize="14" Foreground="#DCE5F5" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="550" HorizontalAlignment="Center">
+                        <TextBlock x:Name="DescriptionTextBlock" Grid.Row="3" FontSize="14" Foreground="#323130" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="550" HorizontalAlignment="Center">
                             A PowerShell desktop application for managing Business Central on-premises.<LineBreak/><LineBreak/>
                             Find updates and report issues on
-                            <Hyperlink x:Name="GitHubLink" Foreground="Orange" NavigateUri="https://github.com/Uki99/Business-Central-Manager">GitHub</Hyperlink>.
+                            <Hyperlink x:Name="GitHubLink" Foreground="#008489" NavigateUri="https://github.com/Uki99/Business-Central-Manager">GitHub</Hyperlink>.
                         </TextBlock>
 
                         <Grid Grid.Row="5" HorizontalAlignment="Center">
@@ -927,42 +1031,31 @@
                             </Grid.ColumnDefinitions>
 
                             <Button x:Name="CheckForUpdatesBtn" Grid.Column="0" Width="212" Height="40" FontSize="14"
-                                    Foreground="#101D3B" FontWeight="SemiBold" Content="Check for Updates" Background="Orange">
-                                <Button.Template>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Button.Template>
+                                    Content="Check for Updates" Style="{StaticResource BusinessCentralActionButton}">
                             </Button>
 
                             <Button x:Name="ShowDocumentationBtn" Grid.Column="1" Width="212" Height="40" FontSize="14"
-                                    Foreground="White" FontWeight="SemiBold" Content="Show Documentation" Background="#28447F" BorderBrush="#6B86B7" BorderThickness="1">
-                                <Button.Template>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-                                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Button.Template>
+                                    Content="Show Documentation">
                             </Button>
                         </Grid>
 
-                        <TextBlock x:Name="CopyrightTextBlock" Grid.Row="6" HorizontalAlignment="Center" Foreground="#B4C3E1" FontSize="11" Margin="0,24,0,0">Copyright 2026 Uglješa Ćirić. All rights reserved.</TextBlock>
+                        <TextBlock x:Name="CopyrightTextBlock" Grid.Row="6" HorizontalAlignment="Center" Foreground="#69747D" FontSize="11" Margin="0,24,0,0">Copyright 2026 Uglješa Ćirić. All rights reserved.</TextBlock>
                     </Grid>
-            </Grid>
+                    </Border>
+                    </TabItem>
+                    </TabControl>
         </Grid>
         <Border x:Name="ContainerModuleLoading"
                 Grid.Row="0"
                 Grid.RowSpan="2"
                 Grid.Column="1"
-                Background="#E8090D31"
+                Background="#CCF4F7FA"
                 Visibility="Collapsed"
                 Panel.ZIndex="10">
-            <StackPanel Width="280" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <TextBlock Text="Loading BCContainerHelper..." Foreground="White" FontSize="18" FontWeight="SemiBold" TextAlignment="Center" Margin="0,0,0,16"/>
+            <Border Width="300" Padding="24" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Background="#F8FAFC" BorderBrush="#CCD7E2" BorderThickness="1" CornerRadius="6">
+            <StackPanel>
+                <TextBlock Text="Loading BCContainerHelper..." Foreground="#243B53" FontSize="16" FontWeight="SemiBold" TextAlignment="Center" Margin="0,0,0,16"/>
                 <Grid x:Name="ContainerLoadingSpinner" Width="30" Height="30" HorizontalAlignment="Center" RenderTransformOrigin="0.5,0.5">
                     <Grid.RenderTransform>
                         <RotateTransform/>
@@ -985,10 +1078,11 @@
                             </Style.Triggers>
                         </Style>
                     </Grid.Style>
-                    <Ellipse Width="26" Height="26" Stroke="#516A9C" StrokeThickness="3"/>
-                    <Path Data="M 15,2 A 13,13 0 0 1 28,15" Stroke="Orange" StrokeThickness="3" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                    <Ellipse Width="26" Height="26" Stroke="#CCD7E2" StrokeThickness="3"/>
+                    <Path Data="M 15,2 A 13,13 0 0 1 28,15" Stroke="#008489" StrokeThickness="3" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                 </Grid>
             </StackPanel>
+            </Border>
         </Border>
     </Grid>
 </Window>

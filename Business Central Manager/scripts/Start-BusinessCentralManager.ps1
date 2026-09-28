@@ -33,15 +33,6 @@ public sealed class BcManagerDialogOwner : IWin32Window
 '@
 
 
-# Start Initialize-BusinessCentralManager.ps1
-$scriptPath = Join-Path $PSScriptRoot 'Initialize-BusinessCentralManager.ps1'
-$Initializer = Start-Process -FilePath PowerShell.exe -WindowStyle $windowStyle -ArgumentList ('-NoProfile -ExecutionPolicy Unrestricted -File "{0}"' -f $scriptPath) -Wait -PassThru -ErrorAction Stop
-
-# Code 200 is a custom exit code that indicates update has happened, the app has been restarted so the initial parent process can close
-if ($Initializer.ExitCode -eq 200) {
-    Exit
-}
-
 # Load settings from json
 try {
     $settings = Get-Content -LiteralPath $settingsPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
@@ -50,6 +41,22 @@ catch {
     $errorMessage = $_.ToString()
     [System.Windows.Forms.MessageBox]::Show($errorMessage, "Error", "OK", "Error")
     Exit
+}
+
+function Invoke-BusinessCentralManagerUpdateCheck {
+    param ([bool] $ShowUpToDateMessage)
+
+    Import-Module -Force (Join-Path $PSScriptRoot 'modules\Update-BusinessCentralManager.ps1')
+    Update-BusinessCentralManager -Owner 'Uki99' -Repository 'Business-Central-Manager' -CurrentVersion $settings.settings.applicationVersion -ShowUpToDateMessage $ShowUpToDateMessage
+}
+
+if ($settings.settings.checkForApplicationUpdateOnStart) {
+    Write-Host "Checking for Business Central Manager updates. Please wait...`n"
+    try {
+        Invoke-BusinessCentralManagerUpdateCheck -ShowUpToDateMessage $false
+    } catch {
+        Write-Host "Error occurred during application update:`n$_" -ForegroundColor Red
+    }
 }
 
 $dependencyFailures = @{}
@@ -176,23 +183,31 @@ $MainWindowXAML.SelectNodes('//*[@x:Name]', $namespaceManager) | ForEach-Object 
 function Select-File {
     param (
         [Parameter(Mandatory = $true)] [string] $FileFilter,
-        [string]$Directory = ([environment]::GetFolderPath('Desktop'))
+        [string] $Directory = ([environment]::GetFolderPath('Desktop')),
+        [string] $Title = 'Select a file',
+        [System.Windows.Forms.IWin32Window] $Owner
     )
 
     $OpenFileDialog = New-Object -TypeName System.Windows.Forms.OpenFileDialog
-    $OpenFileDialog.InitialDirectory = (Resolve-Path $Directory).Path
-    $OpenFileDialog.RestoreDirectory = $true
-    $OpenFileDialog.Filter = $FileFilter
+    try {
+        if ($Directory -and (Test-Path -LiteralPath $Directory -PathType Container)) {
+            $OpenFileDialog.InitialDirectory = (Resolve-Path -LiteralPath $Directory).Path
+        }
+        $OpenFileDialog.RestoreDirectory = $true
+        $OpenFileDialog.CheckFileExists = $true
+        $OpenFileDialog.Multiselect = $false
+        $OpenFileDialog.Filter = $FileFilter
+        $OpenFileDialog.Title = $Title
 
-    $result = $OpenFileDialog.ShowDialog()
-
-    if ($result -eq [System.Windows.Forms.DialogResult]::OK) {
-        if (Test-Path $OpenFileDialog.FileName -PathType Leaf) {
+        $result = if ($Owner) { $OpenFileDialog.ShowDialog($Owner) } else { $OpenFileDialog.ShowDialog() }
+        if ($result -eq [System.Windows.Forms.DialogResult]::OK -and
+            (Test-Path -LiteralPath $OpenFileDialog.FileName -PathType Leaf)) {
             return $OpenFileDialog.FileName
         }
+        return $null
+    } finally {
+        $OpenFileDialog.Dispose()
     }
-
-    return $null
 }
 
 function Select-Folder {
@@ -766,7 +781,7 @@ function Save-ApplicationSetting {
 }
 
 function Restart-BusinessCentralManager {
-    $launcherPath = Join-Path ($PSScriptRoot | Split-Path | Split-Path) 'Launch Business Central Manager.cmd'
+    $launcherPath = Join-Path ($PSScriptRoot | Split-Path) 'Start-BusinessCentralManager.cmd'
     Start-Process -FilePath $launcherPath -WindowStyle Hidden -ErrorAction Stop
     Exit
 }
@@ -1212,7 +1227,43 @@ $var_GetCurrentBcLicenseInfoBtn.Add_Click({
 ###      SETTINGS TOPIC      ###
 # ------------------------------#
 
+$var_NavAdminToolBrowseBtn.Add_Click({
+    try {
+        $initialDirectory = Join-Path $env:ProgramFiles 'Microsoft Dynamics 365 Business Central'
+        $currentPath = $var_NavAdminTool.Text.Trim().Trim('"')
+        if ($currentPath) {
+            $currentDirectory = Split-Path -Path $currentPath -Parent
+            if ($currentDirectory -and (Test-Path -LiteralPath $currentDirectory -PathType Container)) {
+                $initialDirectory = $currentDirectory
+            }
+        }
+
+        $dialogOwner = [BcManagerDialogOwner]::new(([System.Windows.Interop.WindowInteropHelper]::new($window).Handle))
+        $toolPath = Select-File -FileFilter 'Business Central administration tool (NavAdminTool.ps1)|NavAdminTool.ps1' -Directory $initialDirectory -Title 'Select NavAdminTool.ps1' -Owner $dialogOwner
+        if ([string]::IsNullOrEmpty($toolPath)) { return }
+        if ([System.IO.Path]::GetFileName($toolPath) -ine 'NavAdminTool.ps1') {
+            throw 'Select the file named NavAdminTool.ps1 from your Business Central installation.'
+        }
+
+        $var_NavAdminTool.Text = $toolPath
+        $null = $var_NavAdminTool.Focus()
+        $var_NavAdminTool.CaretIndex = $toolPath.Length
+    } catch {
+        [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Could not select NavAdminTool', 'OK', 'Error') | Out-Null
+    }
+})
+
 $var_SettingsSaveBtn.Add_Click({
+    $navAdminToolPath = $var_NavAdminTool.Text.Trim().Trim('"')
+    if ($navAdminToolPath -and
+        (-not (Test-Path -LiteralPath $navAdminToolPath -PathType Leaf -ErrorAction SilentlyContinue) -or
+         [System.IO.Path]::GetFileName($navAdminToolPath) -ine 'NavAdminTool.ps1')) {
+        [System.Windows.Forms.MessageBox]::Show('Choose an existing NavAdminTool.ps1 file, or leave the path blank to detect the installation automatically.', 'Invalid NavAdminTool path', 'OK', 'Warning') | Out-Null
+        $null = $var_NavAdminTool.Focus()
+        return
+    }
+    $var_NavAdminTool.Text = $navAdminToolPath
+
     $ConfirmSaveSettings = [System.Windows.Forms.MessageBox]::Show("Are you sure you want to update application settings and restart?", "Confirm Save and Restart", "YesNo", "Warning")
     
     if ($ConfirmSaveSettings -eq "No") {
@@ -1234,13 +1285,8 @@ $var_SettingsSaveBtn.Add_Click({
 # ------------------------------ #
 
 $var_CheckForUpdatesBtn.Add_Click({
-    Import-Module -Force (Join-Path $PSScriptRoot 'modules\Update-BusinessCentralManager.ps1')
-
-    $owner = "Uki99"
-    $repo = "Business-Central-Manager"
-    
     try {
-        Update-BusinessCentralManager -Owner $owner -Repository $repo -CurrentVersion $settings.settings.applicationVersion -ShowUpToDateMessage $true
+        Invoke-BusinessCentralManagerUpdateCheck -ShowUpToDateMessage $true
     } catch {
         $errorMessage = $_.ToString()
         [System.Windows.Forms.MessageBox]::Show($errorMessage, "Error", "OK", "Error")
@@ -1258,10 +1304,10 @@ $var_GitHubLink.Add_Click({
 
 $var_ShowDocumentationBtn.Add_Click({
     # Get the path to the manual
-    $url = (($PSScriptRoot | Split-Path) + "\data\Business Central Manager - Manual.pdf")
+    $manualPath = Join-Path ($PSScriptRoot | Split-Path) 'docs\Business Central Manager - Manual.pdf'
 
-    # Open the URL in the default web browser
-    Start-Process $url
+    # Open the manual with the default PDF viewer
+    Start-Process $manualPath
 })
 
 

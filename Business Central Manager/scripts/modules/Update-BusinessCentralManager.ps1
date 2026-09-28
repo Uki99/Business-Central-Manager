@@ -161,6 +161,6 @@ function Update-BusinessCentralManager {
 }
 
 function Restart-BusinessCentralManager {
-    $launcherPath = Join-Path ($PSScriptRoot | Split-Path | Split-Path | Split-Path) 'Launch Business Central Manager.cmd'
+    $launcherPath = Join-Path ($PSScriptRoot | Split-Path | Split-Path) 'Start-BusinessCentralManager.cmd'
     Start-Process -FilePath $launcherPath -WindowStyle Hidden -ErrorAction Stop
 }
