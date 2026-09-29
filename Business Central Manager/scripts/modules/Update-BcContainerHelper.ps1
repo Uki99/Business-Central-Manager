@@ -10,13 +10,13 @@ function Update-BcContainerHelper {
 
     try {
         # Check if BCContainerHelper module is installed
+        $availableModule = Get-Module -ListAvailable -Name BcContainerHelper | Sort-Object Version -Descending | Select-Object -First 1
         $installedModule = Get-InstalledModule -Name BcContainerHelper -ErrorAction SilentlyContinue
 
         if ($installedModule) {
-            $newestVersion = Get-Module -ListAvailable -Name BcContainerHelper | Select-Object -ExpandProperty Version | Sort-Object -Descending | Select-Object -First 1
             $currentVersion = $installedModule.Version
-            if ($newestVersion -gt $currentVersion) {
-                $currentVersion = $newestVersion
+            if ($availableModule -and $availableModule.Version -gt [version]$currentVersion) {
+                $currentVersion = $availableModule.Version
             }
             $repository = if ($installedModule.Repository) { $installedModule.Repository } else { 'PSGallery' }
             $latestVersion = (Find-Module -Name BcContainerHelper -Repository $repository -ErrorAction Stop).Version
@@ -29,34 +29,23 @@ function Update-BcContainerHelper {
                 }
 
                 Write-Host "Updating BCContainerHelper module. Please wait...`n"
-
-                try {
-                    Update-Module BcContainerHelper -ErrorAction Stop
-                    Write-Host "Module BCContainerHelper successfully updated" -ForegroundColor Green
-                } catch {
-                    $errorMessage = $_.ToString()
-                    Write-Host "Error occurred during module update:`n$errorMessage" -ForegroundColor Red
-                    return
-                }
+                Update-Module BcContainerHelper -ErrorAction Stop
+                Write-Host "Module BCContainerHelper successfully updated" -ForegroundColor Green
             } else {
                 Write-Host "BCContainerHelper module is already up to date.`n" -ForegroundColor Green
             }
+        } elseif ($availableModule) {
+            Write-Host "BCContainerHelper is available but was not installed with PowerShellGet; skipping update check.`n"
         }
         else {
             [System.Windows.Forms.MessageBox]::Show($Owner, "PowerShell module BCContainerHelper not found. Press OK to install the required module now.", "BCContainerHelper Install", "OK", "Warning") | Out-Null
 
             Write-Host "Installing BCContainerHelper module. Please wait...`n"
 
-            try {
-                Install-Module BCContainerHelper -Force -ErrorAction Stop
-                Write-Host "Module BCContainerHelper successfully installed`n" -ForegroundColor Green
-            } catch {
-                $errorMessage = $_.ToString()
-                Write-Host "Error occurred during module installation:`n$errorMessage" -ForegroundColor Red
-            }
+            Install-Module BCContainerHelper -Force -ErrorAction Stop
+            Write-Host "Module BCContainerHelper successfully installed`n" -ForegroundColor Green
         }
     } catch {
-        $errorMessage = $_.ToString()
-        Write-Host "An error occurred during BCContainerHelper module update:`n$errorMessage" -ForegroundColor Red
+        throw "BCContainerHelper setup failed: $($_.Exception.Message)"
     }
 }

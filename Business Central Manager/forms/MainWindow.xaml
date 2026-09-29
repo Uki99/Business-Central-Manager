@@ -517,6 +517,7 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition/>
                                 <RowDefinition/>
+                                <RowDefinition/>
                             </Grid.RowDefinitions>
 
                             <Grid.ColumnDefinitions>
@@ -546,7 +547,17 @@
                                 </ComboBox>
                             </StackPanel>
 
-                            <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal">
+                            <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,10">
+                                <Label Content="Publish Scope" VerticalAlignment="Center" Width="120"/>
+
+                                <ComboBox Width="210" SelectedIndex="0" Height="32" x:Name="AppPublishingScopeComboBox"
+                                          ToolTip="Tenant publishes only to the selected tenant. Global makes the package available to all tenants on the server.">
+                                    <ComboBoxItem>Tenant</ComboBoxItem>
+                                    <ComboBoxItem>Global</ComboBoxItem>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal">
                                 <Label Content="Choose App" VerticalAlignment="Center" Width="120"/>
 
                                 <Button VerticalAlignment="Center" 
@@ -558,7 +569,7 @@
                                 </Button>
                             </StackPanel>
 
-                            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
+                            <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
                                 <Label Content="Upload App" VerticalAlignment="Center" Width="120"/>
 
                                 <Button VerticalAlignment="Center" 
@@ -661,6 +672,7 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition/>
                                 <RowDefinition/>
+                                <RowDefinition/>
                             </Grid.RowDefinitions>
 
                             <Grid.ColumnDefinitions>
@@ -690,7 +702,17 @@
                                 </ComboBox>
                             </StackPanel>
 
-                            <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal">
+                            <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,10">
+                                <Label Content="Publish Scope" VerticalAlignment="Center" Width="140"/>
+
+                                <ComboBox Width="210" SelectedIndex="0" Height="32" x:Name="MultipleAppPublishingScopeComboBox"
+                                          ToolTip="Tenant publishes only to the selected tenant. Global makes the packages available to all tenants on the server.">
+                                    <ComboBoxItem>Tenant</ComboBoxItem>
+                                    <ComboBoxItem>Global</ComboBoxItem>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal">
                                 <Label Content="Choose App Folder" VerticalAlignment="Center" Width="140"/>
 
                                 <Button VerticalAlignment="Center" 
@@ -702,7 +724,7 @@
                                 </Button>
                             </StackPanel>
 
-                            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
+                            <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
                                 <Label Content="Upload App" VerticalAlignment="Center" Width="120"/>
 
                                 <Button VerticalAlignment="Center" 
@@ -739,7 +761,7 @@
 
                                 <ScrollViewer Grid.Row="0" MaxHeight="230" VerticalScrollBarVisibility="Auto" FontSize="12">
                                     <ListView x:Name="MultipleAppPublishingAppStatusList"
-                                              ToolTip="Result for each app after batch publishing; check means success, cross means failed or skipped.">
+                                              ToolTip="Result for each app after batch publishing; check means success, warning means completed with issues, cross means failed or skipped.">
                                         <ListView.View>
                                             <GridView AllowsColumnReorder="False">
                                                 <GridView.ColumnHeaderContainerStyle>
@@ -769,7 +791,7 @@
                                                 <GridViewColumn Header="Status" Width="80">
                                                     <GridViewColumn.CellTemplate>
                                                         <DataTemplate>
-                                                            <TextBlock Text="{Binding Status}" ToolTip="Check: succeeded. Cross: failed or skipped.">
+                                                            <TextBlock Text="{Binding Status}" ToolTip="Check: succeeded. Warning: completed with issues. Cross: failed or skipped.">
                                                                 <TextBlock.Style>
                                                                     <Style TargetType="TextBlock">
                                                                         <Setter Property="HorizontalAlignment" Value="Center" />
@@ -777,6 +799,9 @@
                                                                         <Style.Triggers>
                                                                             <DataTrigger Binding="{Binding Status}" Value="✔️">
                                                                                 <Setter Property="Foreground" Value="Green" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Status}" Value="⚠️">
+                                                                                <Setter Property="Foreground" Value="#A66300" />
                                                                             </DataTrigger>
                                                                             <DataTrigger Binding="{Binding Status}" Value="❌">
                                                                                 <Setter Property="Foreground" Value="Red" />

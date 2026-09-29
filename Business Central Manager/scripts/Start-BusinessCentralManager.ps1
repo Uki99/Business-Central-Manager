@@ -1,6 +1,7 @@
 ﻿
+param ([string] $UpdateReadyFile)
 
-                                                                                    ### Setup Section ###
+### Setup Section ###
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 # Check for admin rights and ask if needed
@@ -8,11 +9,13 @@ $settingsPath = Join-Path ($PSScriptRoot | Split-Path) 'data\settings.json'
 $hideConsole = $false
 try {
     $hideConsole = [bool](Get-Content -LiteralPath $settingsPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop).settings.hidePowerShellConsole
-} catch { }
+}
+catch { }
 $windowStyle = if ($hideConsole) { 'Hidden' } else { 'Normal' }
 
-if(!([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-    Start-Process -FilePath PowerShell.exe -Verb Runas -WindowStyle $windowStyle -ArgumentList ('-NoProfile -ExecutionPolicy Unrestricted -File "{0}"' -f $PSCommandPath) -ErrorAction Stop
+if (!([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    $updateArgument = if ($UpdateReadyFile) { ' -UpdateReadyFile "{0}"' -f $UpdateReadyFile } else { '' }
+    Start-Process -FilePath PowerShell.exe -Verb Runas -WindowStyle $windowStyle -ArgumentList ('-NoProfile -ExecutionPolicy Unrestricted -File "{0}"{1}' -f $PSCommandPath, $updateArgument) -ErrorAction Stop
     Exit
 }
 
@@ -50,12 +53,13 @@ function Invoke-BusinessCentralManagerUpdateCheck {
     Update-BusinessCentralManager -Owner 'Uki99' -Repository 'Business-Central-Manager' -CurrentVersion $settings.settings.applicationVersion -ShowUpToDateMessage $ShowUpToDateMessage
 }
 
-if ($settings.settings.checkForApplicationUpdateOnStart) {
+if ($settings.settings.checkForApplicationUpdateOnStart -and -not $UpdateReadyFile) {
     Write-Host "Checking for Business Central Manager updates. Please wait...`n"
     try {
         Invoke-BusinessCentralManagerUpdateCheck -ShowUpToDateMessage $false
-    } catch {
-        Write-Host "Error occurred during application update:`n$_" -ForegroundColor Red
+    }
+    catch {
+        [System.Windows.Forms.MessageBox]::Show(("Could not check for application updates: {0}" -f $_.Exception.Message), 'Update check failed', 'OK', 'Warning') | Out-Null
     }
 }
 
@@ -63,8 +67,9 @@ $dependencyFailures = @{}
 
 function Resolve-NavAdminToolPath {
     $configuredPath = $settings.settings.navAdminTool
-    if ($configuredPath -and (Test-Path -LiteralPath $configuredPath -PathType Leaf)) {
-        return $configuredPath
+    if ($configuredPath) {
+        if (Test-Path -LiteralPath $configuredPath -PathType Leaf) { return $configuredPath }
+        throw "Configured NavAdminTool.ps1 was not found at $configuredPath. Correct it in Settings or clear it for automatic detection."
     }
 
     $installRoot = Join-Path $env:ProgramFiles 'Microsoft Dynamics 365 Business Central'
@@ -89,16 +94,18 @@ function Import-RequiredDependency {
         }
         if ($dependencyFailures.ContainsKey($Name)) {
             Import-Module -Name $source -Force -ErrorAction Stop
-        } elseif (-not (Get-Module -Name $Name)) {
+        }
+        elseif (-not (Get-Module -Name $Name)) {
             Import-Module -Name $source -ErrorAction Stop
         }
         $dependencyFailures.Remove($Name) | Out-Null
         return $true
-    } catch {
+    }
+    catch {
         $dependencyFailures[$Name] = [pscustomobject]@{
             AttemptedAt = Get-Date
-            Source = $source
-            Error = $_.Exception.Message
+            Source      = $source
+            Error       = $_.Exception.Message
         }
         return $false
     }
@@ -125,7 +132,8 @@ $MainWindowXAML.DocumentElement.RemoveAttribute('Ignorable', 'http://schemas.ope
 $reader = (New-Object System.Xml.XmlNodeReader $MainWindowXAML)
 try {
     $window = [Windows.Markup.XamlReader]::Load( $reader )
-} catch {
+}
+catch {
     $errorMessage = $_.ToString()
     [System.Windows.Forms.MessageBox]::Show($errorMessage, "Error", "OK", "Error")
     Exit
@@ -166,7 +174,8 @@ $MainWindowXAML.SelectNodes('//*[@x:Name]', $namespaceManager) | ForEach-Object 
         if ($null -ne $control) {
             Set-Variable -Name "var_$controlName" -Value $control -ErrorAction Stop
         }
-    } catch {
+    }
+    catch {
         $errorMessage = $_.ToString()
         [System.Windows.Forms.MessageBox]::Show($errorMessage, "Error", "OK", "Error")
         Exit
@@ -176,7 +185,7 @@ $MainWindowXAML.SelectNodes('//*[@x:Name]', $namespaceManager) | ForEach-Object 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 
-                                                                                  ### Function Section ###
+### Function Section ###
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 
@@ -205,7 +214,8 @@ function Select-File {
             return $OpenFileDialog.FileName
         }
         return $null
-    } finally {
+    }
+    finally {
         $OpenFileDialog.Dispose()
     }
 }
@@ -218,7 +228,7 @@ function Select-Folder {
     $result = $folderBrowser.ShowDialog()
 
     if ($result -eq [System.Windows.Forms.DialogResult]::OK) {
-        if (Test-Path $folderBrowser.SelectedPath) {
+        if (Test-Path -LiteralPath $folderBrowser.SelectedPath -PathType Container) {
             return $folderBrowser.SelectedPath
         }
     }
@@ -243,7 +253,8 @@ function Set-TopicAvailability {
         $failureName = Get-TopicDependencyFailure -TopicName $topic.Name
         if ($failureName) {
             $topic.Opacity = 0.45
-        } else {
+        }
+        else {
             $topic.Opacity = 1
         }
     }
@@ -264,14 +275,16 @@ function Receive-ContainerModuleImport {
         if (-not $result.Loaded) { throw $result.Error }
         $script:containerModuleReady = $true
         $dependencyFailures.Remove('BcContainerHelper') | Out-Null
-    } catch {
+    }
+    catch {
         $script:containerModuleReady = $false
         $dependencyFailures['BcContainerHelper'] = [pscustomobject]@{
             AttemptedAt = Get-Date
-            Source = 'BcContainerHelper'
-            Error = $_.Exception.Message
+            Source      = 'BcContainerHelper'
+            Error       = $_.Exception.Message
         }
-    } finally {
+    }
+    finally {
         $script:containerTimer.Stop()
         $script:containerPowerShell.Dispose()
         $script:containerPowerShell = $null
@@ -290,7 +303,8 @@ function Receive-ContainerModuleImport {
     }
     if ($script:containerModuleReady) {
         $var_ContainerManagementTopic.IsChecked = $true
-    } else {
+    }
+    else {
         $failure = $dependencyFailures['BcContainerHelper']
         [System.Windows.Forms.MessageBox]::Show(("BcContainerHelper still could not be loaded from {0}.`nAttempted: {1}`nReason: {2}" -f $failure.Source, $failure.AttemptedAt, $failure.Error), 'Dependency unavailable', 'OK', 'Error') | Out-Null
     }
@@ -310,36 +324,39 @@ function Start-ContainerModuleImport {
         $script:containerPowerShell = [PowerShell]::Create()
         $script:containerPowerShell.Runspace = $script:containerRunspace
         $null = $script:containerPowerShell.AddScript({
-            param ([bool] $checkForUpdates, [string] $updaterPath, [IntPtr] $ownerHandle)
+                param ([bool] $checkForUpdates, [string] $updaterPath, [IntPtr] $ownerHandle)
 
-            $warning = $null
-            if ($checkForUpdates) {
-                try {
-                    Import-Module -Name $updaterPath -ErrorAction Stop
-                    Update-BcContainerHelper -Owner ([BcManagerDialogOwner]::new($ownerHandle))
-                } catch {
-                    $warning = $_.Exception.Message
+                $warning = $null
+                if ($checkForUpdates -or -not (Get-Module -ListAvailable -Name BcContainerHelper)) {
+                    try {
+                        Import-Module -Name $updaterPath -ErrorAction Stop
+                        Update-BcContainerHelper -Owner ([BcManagerDialogOwner]::new($ownerHandle))
+                    }
+                    catch {
+                        $warning = $_.Exception.Message
+                    }
                 }
-            }
-            try {
-                Import-Module -Name BcContainerHelper -ErrorAction Stop
-                [pscustomobject]@{ Loaded = $true; Warning = $warning; Error = $null }
-            } catch {
-                [pscustomobject]@{ Loaded = $false; Warning = $warning; Error = $_.Exception.Message }
-            }
-        }.ToString()).AddArgument([bool]$settings.settings.searchForUpdateBcContainerHelper).AddArgument(
+                try {
+                    Import-Module -Name BcContainerHelper -ErrorAction Stop
+                    [pscustomobject]@{ Loaded = $true; Warning = $warning; Error = $null }
+                }
+                catch {
+                    [pscustomobject]@{ Loaded = $false; Warning = $warning; Error = $_.Exception.Message }
+                }
+            }.ToString()).AddArgument([bool]$settings.settings.searchForUpdateBcContainerHelper).AddArgument(
             (Join-Path $PSScriptRoot 'modules\Update-BcContainerHelper.ps1')).AddArgument(
             ([System.Windows.Interop.WindowInteropHelper]::new($window).Handle))
         $script:containerInvocation = $script:containerPowerShell.BeginInvoke()
         $script:containerTimer.Start()
-    } catch {
+    }
+    catch {
         if ($script:containerPowerShell) { $script:containerPowerShell.Dispose(); $script:containerPowerShell = $null }
         if ($script:containerRunspace) { $script:containerRunspace.Dispose(); $script:containerRunspace = $null }
         $script:containerInvocation = $null
         $dependencyFailures['BcContainerHelper'] = [pscustomobject]@{
             AttemptedAt = Get-Date
-            Source = 'BcContainerHelper'
-            Error = $_.Exception.Message
+            Source      = 'BcContainerHelper'
+            Error       = $_.Exception.Message
         }
         $var_ContainerModuleLoading.Visibility = [System.Windows.Visibility]::Collapsed
         $var_TopicsContainer.IsEnabled = $true
@@ -349,10 +366,34 @@ function Start-ContainerModuleImport {
     }
 }
 
+function Get-SupportedBusinessCentralVersionFilter {
+    param ([string] $Pattern)
+
+    try {
+        return [regex]::new($Pattern)
+    }
+    catch {
+        throw "Supported BC version must be a valid regular expression: $($_.Exception.Message)"
+    }
+}
+
 function Update-ServerInstanceOptions {
-    $instances = Get-NAVServerInstance -ErrorAction Stop | Where-Object { ($_.State -eq 'Running') -and ($_.Version -match $settings.settings.supportedBusinessCentralVersion) }
     foreach ($control in @($var_AppPublishingServerInstanceComboBox, $var_MultipleAppPublishingServerInstanceComboBox, $var_LicenseServerInstanceComboBox)) {
         $control.Items.Clear()
+    }
+    try {
+        $versionFilter = Get-SupportedBusinessCentralVersionFilter -Pattern $settings.settings.supportedBusinessCentralVersion
+    }
+    catch {
+        [System.Windows.Forms.MessageBox]::Show(("{0}`nCorrect it in Settings." -f $_.Exception.Message), 'Invalid BC version filter', 'OK', 'Warning') | Out-Null
+        return
+    }
+    try {
+        $instances = Get-NAVServerInstance -ErrorAction Stop | Where-Object { ($_.State -eq 'Running') -and $versionFilter.IsMatch([string]$_.Version) }
+    }
+    catch {
+        [System.Windows.Forms.MessageBox]::Show(("Could not load server instances: {0}" -f $_.Exception.Message), 'Server instances unavailable', 'OK', 'Warning') | Out-Null
+        return
     }
     foreach ($instance in $instances) {
         $position = $instance.ServerInstance.IndexOf('$')
@@ -435,20 +476,21 @@ function Get-TargetTenant {
 
 function Set-UIElement {
     param(
-        [Parameter(Mandatory=$true)] $Element,
-        [Parameter(Mandatory=$true)] $Property,
-        [Parameter(Mandatory=$true)] $Value,
-        [Parameter(Mandatory=$false)] $OverrideValue = $true
+        [Parameter(Mandatory = $true)] $Element,
+        [Parameter(Mandatory = $true)] $Property,
+        [Parameter(Mandatory = $true)] $Value,
+        [Parameter(Mandatory = $false)] $OverrideValue = $true
     )
 
     if ($OverrideValue) {
-        $Element.Dispatcher.Invoke([Action]{
-            $Element.$Property = $Value
-        }, "Render")
-    } else {
-        $Element.Dispatcher.Invoke([Action]{
-            $Element.$Property += $Value
-        }, "Render")
+        $Element.Dispatcher.Invoke([Action] {
+                $Element.$Property = $Value
+            }, "Render")
+    }
+    else {
+        $Element.Dispatcher.Invoke([Action] {
+                $Element.$Property += $Value
+            }, "Render")
     }
 }
 
@@ -459,6 +501,7 @@ function Install-BusinessCentralApp {
         [Parameter(Mandatory = $true)] [string] $AppPath,
         [Parameter(Mandatory = $true)] [string] $ServerInstance,
         [Parameter(Mandatory = $true)] [string] $Tenant,
+        [Parameter(Mandatory = $false)] [ValidateSet('Tenant', 'Global')] [string] $PublishScope = 'Tenant',
         [Parameter(Mandatory = $false)] [Microsoft.Dynamics.Nav.Types.NavAppSyncMode] $SyncMode = [Microsoft.Dynamics.Nav.Types.NavAppSyncMode]::Add,
         [Parameter(Mandatory = $true)] [boolean] $SuppressGui,
         [Parameter(Mandatory = $false)] [boolean] $AlreadyPublished = $false,
@@ -469,7 +512,8 @@ function Install-BusinessCentralApp {
 
     if ($PSBoundParameters.ContainsKey('ProgressBarContainer') -and $PSBoundParameters.ContainsKey('ProgressBar') -and $PSBoundParameters.ContainsKey('ProgressInfo')) {
         $ShouldHandleProgressBar = $true
-    } else {
+    }
+    else {
         $ShouldHandleProgressBar = $false
     }
     
@@ -499,7 +543,9 @@ function Install-BusinessCentralApp {
         Set-UIElement -Element $ProgressBar -Property "Value" -Value 25
     }
     if (-not $AlreadyPublished) {
-        Publish-NAVApp -ServerInstance $ServerInstance -Path $AppPath -ErrorAction Stop
+        $publishParameters = @{ ServerInstance = $ServerInstance; Path = $AppPath; Scope = $PublishScope; ErrorAction = 'Stop' }
+        if ($PublishScope -eq 'Tenant') { $publishParameters.Tenant = $Tenant }
+        Publish-NAVApp @publishParameters
     }
 
     if ($ShouldHandleProgressBar) {
@@ -512,18 +558,13 @@ function Install-BusinessCentralApp {
         Set-UIElement -Element $ProgressInfo -Property "Text" -Value "Installing app..."
         Set-UIElement -Element $ProgressBar -Property "Value" -Value 75
     }
-    try {
-        Install-NAVApp -ServerInstance $ServerInstance -AppId $TargetAppInfo.Id -Version $TargetAppInfo.Version -Tenant $Tenant -Force -ErrorAction Stop
-    } catch [InvalidOperationException] {
-        <# This is to handle installing the apps which were uninstalled without clean mode but recognized as in need of install #>
-        Start-NAVAppDataUpgrade -ServerInstance $ServerInstance -AppId $TargetAppInfo.Id -Version $TargetAppInfo.Version -Tenant $Tenant -Force -ErrorAction Stop
-    }
+    Install-NAVApp -ServerInstance $ServerInstance -AppId $TargetAppInfo.Id -Version $TargetAppInfo.Version -Tenant $Tenant -Force -ErrorAction Stop
 
     if ($ShouldHandleProgressBar) {
         Set-UIElement -Element $ProgressInfo -Property "Text" -Value "Finalizing..."
         Set-UIElement -Element $ProgressBar -Property "Value" -Value 100
     }
-    if(-not $SuppressGui) {
+    if (-not $SuppressGui) {
         [System.Windows.Forms.MessageBox]::Show(("Successfully installed the extension {0} with version {1}!" -f $TargetAppInfo.Name, $TargetAppInfo.Version), "Succcess", "OK", "Asterisk") | Out-Null
     }
 
@@ -543,6 +584,7 @@ function Update-BusinessCentralApp {
         [Parameter(Mandatory = $true)] [string] $AppPath,
         [Parameter(Mandatory = $true)] [string] $ServerInstance,
         [Parameter(Mandatory = $true)] [string] $Tenant,
+        [Parameter(Mandatory = $false)] [ValidateSet('Tenant', 'Global')] [string] $PublishScope = 'Tenant',
         [Parameter(Mandatory = $false)] [Microsoft.Dynamics.Nav.Types.NavAppSyncMode] $SyncMode = [Microsoft.Dynamics.Nav.Types.NavAppSyncMode]::Add,
         [Parameter(Mandatory = $true)] [boolean] $SuppressGui,
         [Parameter(Mandatory = $false)] [boolean] $AlreadyPublished = $false,
@@ -553,7 +595,8 @@ function Update-BusinessCentralApp {
 
     if ($PSBoundParameters.ContainsKey('ProgressBarContainer') -and $PSBoundParameters.ContainsKey('ProgressBar') -and $PSBoundParameters.ContainsKey('ProgressInfo')) {
         $ShouldHandleProgressBar = $true
-    } else {
+    }
+    else {
         $ShouldHandleProgressBar = $false
     }
 
@@ -584,7 +627,9 @@ function Update-BusinessCentralApp {
         Set-UIElement -Element $ProgressBar -Property "Value" -Value 20
     }
     if (-not $AlreadyPublished) {
-        Publish-NAVApp -ServerInstance $ServerInstance -Path $AppPath -ErrorAction Stop
+        $publishParameters = @{ ServerInstance = $ServerInstance; Path = $AppPath; Scope = $PublishScope; ErrorAction = 'Stop' }
+        if ($PublishScope -eq 'Tenant') { $publishParameters.Tenant = $Tenant }
+        Publish-NAVApp @publishParameters
     }
 
     if ($ShouldHandleProgressBar) {
@@ -608,11 +653,15 @@ function Update-BusinessCentralApp {
         try {
             $remainingTenants = @(Get-NAVAppTenant -ServerInstance $ServerInstance -Id $OldAppInfo.Id -Version $OldAppInfo.Version -IncludeFailed -ErrorAction Stop)
             if ($remainingTenants.Count -eq 0) {
-                Unpublish-NAVApp -ServerInstance $ServerInstance -AppId $OldAppInfo.Id -Version $OldAppInfo.Version -ErrorAction Stop
-            } else {
+                $unpublishParameters = @{ ServerInstance = $ServerInstance; AppId = $OldAppInfo.Id; Version = $OldAppInfo.Version; ErrorAction = 'Stop' }
+                if ($OldAppInfo.Scope -eq 'Tenant') { $unpublishParameters.Tenant = $Tenant }
+                Unpublish-NAVApp @unpublishParameters
+            }
+            else {
                 Write-Warning "The previous app version is still installed on another tenant and remains published."
             }
-        } catch {
+        }
+        catch {
             Write-Warning ("The upgrade succeeded, but the old version could not be unpublished: {0}" -f $_.Exception.Message)
         }
     }
@@ -641,6 +690,7 @@ function Invoke-BusinessCentralAppDeployment {
         [Parameter(Mandatory = $true)] [string]$ServerInstance,
         [Parameter(Mandatory = $true)] [string]$Tenant,
         [Parameter(Mandatory = $true)] [Microsoft.Dynamics.Nav.Types.NavAppSyncMode]$SyncMode,
+        [Parameter(Mandatory = $false)] [ValidateSet('Tenant', 'Global')] [string]$PublishScope = 'Tenant',
         [Parameter(Mandatory = $false)] [boolean]$SuppressGui = $false,
         [Parameter(Mandatory = $false)] [System.Windows.Controls.StackPanel]$ProgressBarContainer,
         [Parameter(Mandatory = $false)] [System.Windows.Controls.ProgressBar]$ProgressBar,
@@ -650,29 +700,45 @@ function Invoke-BusinessCentralAppDeployment {
     $requestedApp = Get-NAVAppInfo -Path $AppPath -ErrorAction Stop
     $publishedApps = @(Get-NAVAppInfo -Id $requestedApp.Id -ServerInstance $ServerInstance -Tenant $Tenant -TenantSpecificProperties -ErrorAction Stop)
     $installedApps = @($publishedApps | Where-Object { $_.IsInstalled })
-    $alreadyPublished = @($publishedApps | Where-Object { [version]$_.Version -eq [version]$requestedApp.Version }).Count -gt 0
+    if ($installedApps | Where-Object { [string]$_.Scope -ne $PublishScope }) {
+        throw "The app is already installed with a different scope. Select $($installedApps[0].Scope) to upgrade it."
+    }
+    $matchingPublishedApps = @($publishedApps | Where-Object {
+            [version]$_.Version -eq [version]$requestedApp.Version -and
+            [string]$_.Scope -eq $PublishScope
+        })
+    $alreadyPublished = $matchingPublishedApps.Count -gt 0
+
+    if ($alreadyPublished -and (-not $requestedApp.PackageId -or
+            @($matchingPublishedApps | Where-Object { -not $_.PackageId -or [string]$_.PackageId -ne [string]$requestedApp.PackageId }).Count -gt 0)) {
+        throw "A package for $($requestedApp.Name) $($requestedApp.Version) is already published, but its PackageId does not match the selected file or is unavailable. Rebuild with a higher app version before deploying this package."
+    }
 
     $notice = $null
-    if ($publishedApps | Where-Object { [version]$_.Version -gt [version]$requestedApp.Version }) {
+    $newerVersionExists = [bool]($publishedApps | Where-Object { [version]$_.Version -gt [version]$requestedApp.Version })
+    if ($newerVersionExists) {
         $notice = "A newer version of $($requestedApp.Name) is already published or installed. No action was performed."
-    } elseif ($installedApps | Where-Object { [version]$_.Version -eq [version]$requestedApp.Version }) {
+    }
+    elseif ($installedApps | Where-Object { [version]$_.Version -eq [version]$requestedApp.Version }) {
         $notice = "$($requestedApp.Name) $($requestedApp.Version) is already installed. No action was performed."
     }
     if ($notice) {
         if ($SuppressGui) {
             Write-Warning $notice
-        } else {
+        }
+        else {
             [System.Windows.Forms.MessageBox]::Show($notice, 'App already available', 'OK', 'Information') | Out-Null
         }
         return $true
     }
 
     $appParameters = @{
-        AppPath = $AppPath
-        ServerInstance = $ServerInstance
-        Tenant = $Tenant
-        SyncMode = $SyncMode
-        SuppressGui = $SuppressGui
+        AppPath          = $AppPath
+        ServerInstance   = $ServerInstance
+        Tenant           = $Tenant
+        SyncMode         = $SyncMode
+        PublishScope     = $PublishScope
+        SuppressGui      = $SuppressGui
         AlreadyPublished = $alreadyPublished
     }
     $showProgress = $PSBoundParameters.ContainsKey('ProgressBarContainer') -and $PSBoundParameters.ContainsKey('ProgressBar') -and $PSBoundParameters.ContainsKey('ProgressInfo')
@@ -685,10 +751,12 @@ function Invoke-BusinessCentralAppDeployment {
     try {
         $applied = if ($installedApps.Count -gt 0) { Update-BusinessCentralApp @appParameters } else { Install-BusinessCentralApp @appParameters }
         return (-not $applied)
-    } catch {
+    }
+    catch {
         if ($SuppressGui) {
             Write-Warning $_.Exception.Message
-        } else {
+        }
+        else {
             [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Error', 'OK', 'Error') | Out-Null
         }
         if ($showProgress) {
@@ -714,67 +782,60 @@ function Set-SettingControlValue {
 
         if ($control -is [System.Windows.Controls.TextBox]) {
             $control.Text = $Value
-        } elseif ($control -is [System.Windows.Controls.TextBlock]) {
+        }
+        elseif ($control -is [System.Windows.Controls.TextBlock]) {
             $control.Text = $Value
-        } elseif ($control -is [System.Windows.Controls.CheckBox]) {
+        }
+        elseif ($control -is [System.Windows.Controls.CheckBox]) {
             $control.IsChecked = [bool]$Value
         }
-    } catch {
+    }
+    catch {
         $errorMessage = $_.ToString()
         [System.Windows.Forms.MessageBox]::Show($errorMessage, "Error", "OK", "Error")
         Exit
     }
 }
 
-function Save-ApplicationSetting {
+function Save-ApplicationSettings {
     [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)] $SettingName,
-        [Parameter(Mandatory = $true)] $PreviousValue
-    )
+    param ()
 
-    try {
-        # Get variable in XAML that corresponds to the JSON key in settings.json
-        $controlVariable = Get-Variable -Name "var_$SettingName" -ErrorAction SilentlyContinue
-        if (-not $controlVariable) { return }
+    $updatedSettings = $settings | ConvertTo-Json -Depth 10 | ConvertFrom-Json
+    foreach ($property in $updatedSettings.settings.PSObject.Properties) {
+        $controlVariable = Get-Variable -Name "var_$($property.Name)" -ErrorAction SilentlyContinue
+        if (-not $controlVariable) { continue }
         $settingControl = $controlVariable.Value
-
-        # Parse new values depending on the control type
         if ($settingControl -is [System.Windows.Controls.TextBox]) {
-            $newValue = $settingControl.Text
-        } elseif ($settingControl -is [System.Windows.Controls.CheckBox]) {
-            $newValue = $settingControl.IsChecked
-        } else {
-            return
+            $property.Value = $settingControl.Text
         }
-    } catch {
-        $errorMessage = $_.ToString()
-        [System.Windows.Forms.MessageBox]::Show($errorMessage, "Error", "OK", "Error")
-        Exit
+        elseif ($settingControl -is [System.Windows.Controls.CheckBox]) {
+            $property.Value = [bool]$settingControl.IsChecked
+        }
     }
 
-    # Save to Json on disk
-    if ($PreviousValue -eq $newValue) {
-        return
-    }
+    $null = Get-SupportedBusinessCentralVersionFilter -Pattern $updatedSettings.settings.supportedBusinessCentralVersion
+    $json = $updatedSettings | ConvertTo-Json -Depth 10
+    if ($json -eq ($settings | ConvertTo-Json -Depth 10)) { return }
 
-    $settings.settings.$SettingName = $newValue
-    Add-Type -AssemblyName System.Runtime.Serialization
-    $jsonBytes = [System.Text.Encoding]::UTF8.GetBytes(($settings | ConvertTo-Json -Compress))
-    $reader = [System.Runtime.Serialization.Json.JsonReaderWriterFactory]::CreateJsonReader($jsonBytes, [System.Xml.XmlDictionaryReaderQuotas]::Max)
-    $stream = [System.IO.MemoryStream]::new()
+    $settingsDirectory = Split-Path -Path $settingsPath -Parent
+    $saveId = [guid]::NewGuid()
+    $temporaryPath = Join-Path $settingsDirectory ("settings.{0}.tmp" -f $saveId)
+    $backupPath = Join-Path $settingsDirectory ("settings.{0}.bak" -f $saveId)
+    $saved = $false
     try {
-        $writer = [System.Runtime.Serialization.Json.JsonReaderWriterFactory]::CreateJsonWriter($stream, [System.Text.Encoding]::UTF8, $false, $true, '    ')
-        try {
-            $writer.WriteNode($reader, $true)
-            $writer.Flush()
-        } finally {
-            $writer.Dispose()
+        [System.IO.File]::WriteAllText($temporaryPath, $json, [System.Text.UTF8Encoding]::new($true))
+        [System.IO.File]::Replace($temporaryPath, $settingsPath, $backupPath)
+        $script:settings = $updatedSettings
+        $saved = $true
+    }
+    finally {
+        if (Test-Path -LiteralPath $temporaryPath -PathType Leaf) {
+            Remove-Item -LiteralPath $temporaryPath -Force -ErrorAction SilentlyContinue
         }
-        [System.IO.File]::WriteAllText($settingsPath, [System.Text.Encoding]::UTF8.GetString($stream.ToArray()), [System.Text.UTF8Encoding]::new($true))
-    } finally {
-        $reader.Dispose()
-        $stream.Dispose()
+        if ($saved -and (Test-Path -LiteralPath $backupPath -PathType Leaf)) {
+            Remove-Item -LiteralPath $backupPath -Force -ErrorAction SilentlyContinue
+        }
     }
 }
 
@@ -789,7 +850,7 @@ function Restart-BusinessCentralManager {
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 
-                                                                                      ### GUI Logic ###
+### GUI Logic ###
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 # ---------------------- #
@@ -808,11 +869,16 @@ function Start-AppPublishingJob {
         [Parameter(Mandatory = $true)] [ValidateSet('Single', 'Batch')] [string] $Operation,
         [Parameter(Mandatory = $true)] [string] $AppPath,
         [Parameter(Mandatory = $true)] [string] $ServerInstance,
-        [Parameter(Mandatory = $true)] [Microsoft.Dynamics.Nav.Types.NavAppSyncMode] $SyncMode
+        [Parameter(Mandatory = $true)] [Microsoft.Dynamics.Nav.Types.NavAppSyncMode] $SyncMode,
+        [Parameter(Mandatory = $true)] [ValidateSet('Tenant', 'Global')] [string] $PublishScope
     )
 
     if ($script:appJob) { throw 'An app operation is already running.' }
-    $arguments = @($Operation, $AppPath, $ServerInstance, (Get-TargetTenant), $SyncMode.ToString(),
+    if ($script:licenseJob) { throw 'Wait for the license operation to finish before publishing apps.' }
+    if ($Operation -eq 'Batch' -and -not (Get-Module -ListAvailable -Name BcContainerHelper)) {
+        throw 'Batch publishing requires BcContainerHelper. Open Container Management to install it, then retry.'
+    }
+    $arguments = @($Operation, $AppPath, $ServerInstance, (Get-TargetTenant), $SyncMode.ToString(), $PublishScope,
         (Resolve-NavAdminToolPath), [bool]$settings.settings.unpublishLastInstalledAppDuringUpgrade, $script:appMainScriptPath)
     $script:appJob = Start-Job -FilePath $script:appWorkerPath -ArgumentList $arguments -ErrorAction Stop
     $script:appOperation = $Operation
@@ -827,6 +893,7 @@ function Start-AppPublishingJob {
                 $var_AppPublishingChooseAppBtn, $var_MultipleAppPublishingChooseAppBtn,
                 $var_AppPublishingServerInstanceComboBox, $var_MultipleAppPublishingServerInstanceComboBox,
                 $var_AppPublishingSyncModeComboBox, $var_MultipleAppPublishingSyncModeComboBox,
+                $var_AppPublishingScopeComboBox, $var_MultipleAppPublishingScopeComboBox,
                 $var_SettingsSaveBtn, $var_CheckForUpdatesBtn, $var_LoadBcLicenseBtn)) {
             [pscustomobject]@{ Control = $control; LocalIsEnabled = $control.ReadLocalValue([System.Windows.UIElement]::IsEnabledProperty) }
         })
@@ -839,7 +906,8 @@ function Start-AppPublishingJob {
         $progressInfo = $var_MultipleAppPublishingProgressInfoTxt
         $progressBar = $var_MultipleAppPublishingProgressBar
         $progressInfo.Text = 'Checking app versions and dependencies...'
-    } else {
+    }
+    else {
         $progress = $var_AppPublishingProgress
         $progressInfo = $var_AppPublishingProgressInfoTxt
         $progressBar = $var_AppPublishingProgressBar
@@ -861,16 +929,17 @@ function Receive-AppPublishingJob {
             if ($result.Kind -eq 'Count') {
                 $script:appTotal = [int]$result.Total
                 $var_MultipleAppPublishingProgressInfoTxt.Text = "Processing 0 of $($script:appTotal) apps..."
-            } elseif ($result.Kind -eq 'App') {
+            }
+            elseif ($result.Kind -eq 'App') {
                 $script:appProcessed++
                 $script:appLastResult = $result
                 if (-not $result.Succeeded) { $script:appFailed++ }
                 if ($script:appOperation -eq 'Batch') {
                     $null = $var_MultipleAppPublishingAppStatusList.Items.Add([pscustomobject]@{
-                        AppName = $result.Name
-                        AppVersion = $result.Version
-                        Status = if ($result.Succeeded) { '✔️' } else { '❌' }
-                    })
+                            AppName    = $result.Name
+                            AppVersion = $result.Version
+                            Status     = if (-not $result.Succeeded) { '❌' } elseif ($result.HasWarnings) { '⚠️' } else { '✔️' }
+                        })
                     $var_MultipleAppPublishingProgressBar.Value = 100 * $script:appProcessed / $script:appTotal
                     $var_MultipleAppPublishingProgressInfoTxt.Text = "Processed $($script:appProcessed) of $($script:appTotal) apps..."
                 }
@@ -879,7 +948,8 @@ function Receive-AppPublishingJob {
         if ($jobWarnings) {
             $script:appWarnings += @($jobWarnings | ForEach-Object { $_.Message })
         }
-    } catch {
+    }
+    catch {
         $script:appError = $_.Exception.Message
         Stop-Job -Job $script:appJob -ErrorAction SilentlyContinue
     }
@@ -898,15 +968,23 @@ function Receive-AppPublishingJob {
         $message = "Processed $($script:appProcessed) of $($script:appTotal) apps before publishing stopped.`n$($script:appError)"
         $title = 'Publishing failed'
         $icon = 'Error'
-    } elseif ($script:appOperation -eq 'Batch') {
+    }
+    elseif ($script:appOperation -eq 'Batch') {
         $message = "Processed $($script:appProcessed) apps; $($script:appFailed) failed or were skipped."
         $title = if ($script:appFailed) { 'Completed with issues' } else { 'Success' }
         $icon = if ($script:appFailed) { 'Warning' } else { 'Asterisk' }
-    } elseif ($script:appFailed) {
+    }
+    elseif ($script:appFailed) {
         $message = "Could not complete $($script:appLastResult.Name) $($script:appLastResult.Version)."
         $title = 'Publishing skipped or failed'
         $icon = 'Warning'
-    } else {
+    }
+    elseif ($script:appLastResult.HasWarnings) {
+        $message = "Processed $($script:appLastResult.Name) $($script:appLastResult.Version) with warnings."
+        $title = 'Completed with warnings'
+        $icon = 'Warning'
+    }
+    else {
         $message = "Successfully processed $($script:appLastResult.Name) $($script:appLastResult.Version)."
         $title = 'Success'
         $icon = 'Asterisk'
@@ -924,12 +1002,14 @@ function Receive-AppPublishingJob {
 
     try {
         Remove-Job -Job $script:appJob -Force -ErrorAction SilentlyContinue
-    } finally {
+    }
+    finally {
         $script:appJob = $null
         foreach ($state in $script:appControlStates) {
             if ([object]::ReferenceEquals($state.LocalIsEnabled, [System.Windows.DependencyProperty]::UnsetValue)) {
                 $state.Control.ClearValue([System.Windows.UIElement]::IsEnabledProperty)
-            } else {
+            }
+            else {
                 $state.Control.SetValue([System.Windows.UIElement]::IsEnabledProperty, $state.LocalIsEnabled)
             }
         }
@@ -948,107 +1028,199 @@ function Receive-AppPublishingJob {
 }
 
 $script:appTimer.Add_Tick({
-    $summary = Receive-AppPublishingJob
-    if ($summary) {
-        [System.Windows.Forms.MessageBox]::Show($summary.Message, $summary.Title, 'OK', $summary.Icon) | Out-Null
-    }
-})
-$window.Add_Closing({
-    param($windowSender, $closingArgs)
+        $summary = Receive-AppPublishingJob
+        if ($summary) {
+            [System.Windows.Forms.MessageBox]::Show($summary.Message, $summary.Title, 'OK', $summary.Icon) | Out-Null
+        }
+    })
 
-    if ($script:containerInvocation -and -not $script:containerInvocation.IsCompleted) {
-        $confirmation = [System.Windows.Forms.MessageBox]::Show('BCContainerHelper is still loading. Closing may interrupt an update or installation. Close anyway?', 'Module loading in progress', 'YesNo', 'Warning')
-        if ($confirmation -ne 'Yes') {
+$script:licenseJob = $null
+$script:licenseTimer = [System.Windows.Threading.DispatcherTimer]::new()
+$script:licenseTimer.Interval = [TimeSpan]::FromMilliseconds(250)
+
+function Start-LicenseImportJob {
+    param ([string] $LicensePath, [string] $ServerInstance)
+
+    if ($script:appJob -or $script:licenseJob) { throw 'Wait for the current server operation to finish.' }
+    $navAdminToolPath = Resolve-NavAdminToolPath
+    $script:licenseJob = Start-Job -ScriptBlock {
+        param ([string] $NavAdminToolPath, [string] $LicensePath, [string] $ServerInstance)
+
+        $ErrorActionPreference = 'Stop'
+        Import-Module -Name $NavAdminToolPath -ErrorAction Stop
+        Import-NAVServerLicense -LicenseFile $LicensePath -ServerInstance $ServerInstance -Confirm:$false -ErrorAction Stop
+        try {
+            Restart-NAVServerInstance -ServerInstance $ServerInstance -Confirm:$false -ErrorAction Stop
+        }
+        catch {
+            throw "License imported, but server restart failed: $($_.Exception.Message)"
+        }
+    } -ArgumentList $navAdminToolPath, $LicensePath, $ServerInstance -ErrorAction Stop
+
+    $script:licenseControlStates = @(foreach ($control in @($var_LoadBcLicenseBtn, $var_LicenseChooseBtn,
+                $var_LicenseServerInstanceComboBox, $var_GetCurrentBcLicenseInfoBtn,
+                $var_AppPublishingSendAppBtn, $var_MultipleAppPublishingSendAppBtn,
+                $var_SettingsSaveBtn, $var_CheckForUpdatesBtn)) {
+            [pscustomobject]@{ Control = $control; LocalIsEnabled = $control.ReadLocalValue([System.Windows.UIElement]::IsEnabledProperty) }
+        })
+    $script:licenseButtonContent = $var_LoadBcLicenseBtn.Content
+    foreach ($state in $script:licenseControlStates) {
+        $state.Control.IsEnabled = $false
+    }
+    $var_LoadBcLicenseBtn.Content = 'Applying license...'
+    $script:licenseTimer.Start()
+}
+
+function Receive-LicenseImportJob {
+    if (-not $script:licenseJob -or $script:licenseJob.State -notin @('Completed', 'Failed', 'Stopped')) { return }
+
+    try {
+        $null = Receive-Job -Job $script:licenseJob -ErrorAction Stop
+        if ($script:licenseJob.State -ne 'Completed') {
+            $reason = $script:licenseJob.ChildJobs[0].JobStateInfo.Reason
+            throw $(if ($reason) { $reason.Message } else { "The license job $($script:licenseJob.State)." })
+        }
+        return [pscustomobject]@{ Message = 'Successfully applied license file.'; Title = 'Success'; Icon = 'Asterisk' }
+    }
+    catch {
+        return [pscustomobject]@{ Message = $_.Exception.Message; Title = 'License operation failed'; Icon = 'Error' }
+    }
+    finally {
+        $script:licenseTimer.Stop()
+        Remove-Job -Job $script:licenseJob -Force -ErrorAction SilentlyContinue
+        $script:licenseJob = $null
+        foreach ($state in $script:licenseControlStates) {
+            if ([object]::ReferenceEquals($state.LocalIsEnabled, [System.Windows.DependencyProperty]::UnsetValue)) {
+                $state.Control.ClearValue([System.Windows.UIElement]::IsEnabledProperty)
+            }
+            else {
+                $state.Control.SetValue([System.Windows.UIElement]::IsEnabledProperty, $state.LocalIsEnabled)
+            }
+        }
+        $script:licenseControlStates = @()
+        $var_LoadBcLicenseBtn.Content = $script:licenseButtonContent
+    }
+}
+
+$script:licenseTimer.Add_Tick({
+        $summary = Receive-LicenseImportJob
+        if ($summary) {
+            [System.Windows.Forms.MessageBox]::Show($summary.Message, $summary.Title, 'OK', $summary.Icon) | Out-Null
+        }
+    })
+
+$window.Add_Closing({
+        param($windowSender, $closingArgs)
+
+        if ($script:licenseJob -and $script:licenseJob.State -notin @('Completed', 'Failed', 'Stopped')) {
+            [System.Windows.Forms.MessageBox]::Show('License import or server restart is still running. Wait for it to finish before closing.', 'License operation in progress', 'OK', 'Warning') | Out-Null
             $closingArgs.Cancel = $true
             return
         }
-    }
-    if ($script:appJob) {
-        if ($script:appJob.State -notin @('Completed', 'Failed', 'Stopped')) {
-            $confirmation = [System.Windows.Forms.MessageBox]::Show('App publishing is still running. Closing may interrupt it. Close anyway?', 'Publishing in progress', 'YesNo', 'Warning')
+        if ($script:containerInvocation -and -not $script:containerInvocation.IsCompleted) {
+            $confirmation = [System.Windows.Forms.MessageBox]::Show('BCContainerHelper is still loading. Closing may interrupt an update or installation. Close anyway?', 'Module loading in progress', 'YesNo', 'Warning')
             if ($confirmation -ne 'Yes') {
                 $closingArgs.Cancel = $true
                 return
             }
-            Stop-Job -Job $script:appJob -ErrorAction SilentlyContinue
         }
-        Remove-Job -Job $script:appJob -Force -ErrorAction SilentlyContinue
-        $script:appJob = $null
-    }
-    if ($script:containerPowerShell) {
-        $script:containerTimer.Stop()
-        try {
-            if (-not $script:containerInvocation.IsCompleted) { $script:containerPowerShell.Stop() }
-        } finally {
-            $script:containerPowerShell.Dispose()
+        if ($script:appJob) {
+            if ($script:appJob.State -notin @('Completed', 'Failed', 'Stopped')) {
+                $confirmation = [System.Windows.Forms.MessageBox]::Show('App publishing is still running. Closing may interrupt it. Close anyway?', 'Publishing in progress', 'YesNo', 'Warning')
+                if ($confirmation -ne 'Yes') {
+                    $closingArgs.Cancel = $true
+                    return
+                }
+                Stop-Job -Job $script:appJob -ErrorAction SilentlyContinue
+            }
+            Remove-Job -Job $script:appJob -Force -ErrorAction SilentlyContinue
+            $script:appJob = $null
+        }
+        if ($script:containerPowerShell) {
+            $script:containerTimer.Stop()
+            try {
+                if (-not $script:containerInvocation.IsCompleted) { $script:containerPowerShell.Stop() }
+            }
+            finally {
+                $script:containerPowerShell.Dispose()
+                $script:containerRunspace.Dispose()
+                $script:containerPowerShell = $null
+                $script:containerRunspace = $null
+                $script:containerInvocation = $null
+            }
+        }
+        elseif ($script:containerRunspace) {
             $script:containerRunspace.Dispose()
-            $script:containerPowerShell = $null
             $script:containerRunspace = $null
-            $script:containerInvocation = $null
         }
-    } elseif ($script:containerRunspace) {
-        $script:containerRunspace.Dispose()
-        $script:containerRunspace = $null
-    }
-    $script:appTimer.Stop()
-})
+        if ($script:licenseJob) { $null = Receive-LicenseImportJob }
+        $script:appTimer.Stop()
+        $script:licenseTimer.Stop()
+    })
 
 <# ---- Main window loaded ---- #>
 
 $window.Add_Loaded({
-    if (-not $dependencyFailures.ContainsKey('NavAdminTool')) {
-        Update-ServerInstanceOptions
-    }
+        if (-not $dependencyFailures.ContainsKey('NavAdminTool')) {
+            Update-ServerInstanceOptions
+        }
 
-    # Logic for topic buttons and their tabs 
-    foreach ($topic in $var_TopicsContainer.Children) {
-        $topic.add_Checked({
-             param($topicSender)
+        # Logic for topic buttons and their tabs 
+        foreach ($topic in $var_TopicsContainer.Children) {
+            $topic.add_Checked({
+                    param($topicSender)
 
-             if ($topicSender.Name -eq 'ContainerManagementTopic' -and
-                 -not $dependencyFailures.ContainsKey('BcContainerHelper') -and
-                 -not $script:containerModuleReady) {
-                 Start-ContainerModuleImport
-                 return
-             }
+                    if ($topicSender.Name -eq 'ContainerManagementTopic' -and
+                        -not $dependencyFailures.ContainsKey('BcContainerHelper') -and
+                        -not $script:containerModuleReady) {
+                        Start-ContainerModuleImport
+                        return
+                    }
 
-             if (Get-TopicDependencyFailure -TopicName $topicSender.Name) {
-                 $script:activeTopic.IsChecked = $true
-                 if (Resolve-TopicDependencies -Topic $topicSender) {
-                     $topicSender.IsChecked = $true
-                 }
-                 return
-             }
+                    if (Get-TopicDependencyFailure -TopicName $topicSender.Name) {
+                        $script:activeTopic.IsChecked = $true
+                        if (Resolve-TopicDependencies -Topic $topicSender) {
+                            $topicSender.IsChecked = $true
+                        }
+                        return
+                    }
 
-             $script:activeTopic = $topicSender
-             foreach ($view in $var_TopicsTabContainer.Children) {
-                if ($view.Name -eq $topicSender.Tag) {
-                    Set-UIElement -Element $view -Property "Visibility" -Value 0 # Visible
-                    Set-UIElement -Element $view -Property "IsEnabled" -Value $true
-                } else {
-                    Set-UIElement -Element $view -Property "Visibility" -Value 2 # Hidden
-                    Set-UIElement -Element $view -Property "IsEnabled" -Value $false
-                }
-             }
-        })
-    }
+                    $script:activeTopic = $topicSender
+                    foreach ($view in $var_TopicsTabContainer.Children) {
+                        if ($view.Name -eq $topicSender.Tag) {
+                            Set-UIElement -Element $view -Property "Visibility" -Value 0 # Visible
+                            Set-UIElement -Element $view -Property "IsEnabled" -Value $true
+                        }
+                        else {
+                            Set-UIElement -Element $view -Property "Visibility" -Value 2 # Hidden
+                            Set-UIElement -Element $view -Property "IsEnabled" -Value $false
+                        }
+                    }
+                })
+        }
 
-    $script:activeTopic = $var_AppManagementTopic
-    Set-TopicAvailability
-    if (Get-TopicDependencyFailure -TopicName $var_AppManagementTopic.Name) {
-        $var_SettingsTopic.IsChecked = $true
-    }
+        $script:activeTopic = $var_AppManagementTopic
+        Set-TopicAvailability
+        if (Get-TopicDependencyFailure -TopicName $var_AppManagementTopic.Name) {
+            $var_SettingsTopic.IsChecked = $true
+        }
 
-    # Load settings from settings.json to be displayed
-    foreach ($key in $settings.settings.PSObject.Properties) {
-        $controlName = $key.Name
-        $value = $key.Value
-        Set-SettingControlValue -SettingName $controlName -Value $value
-    }
+        # Load settings from settings.json to be displayed
+        foreach ($key in $settings.settings.PSObject.Properties) {
+            $controlName = $key.Name
+            $value = $key.Value
+            Set-SettingControlValue -SettingName $controlName -Value $value
+        }
 
-    # Load information in About tab
-    $var_AboutTabDisplayVersionTxt.Text = $settings.settings.applicationVersion
-})
+        # Load information in About tab
+        $var_AboutTabDisplayVersionTxt.Text = $settings.settings.applicationVersion
+
+        if ($UpdateReadyFile) {
+            $temporaryReadyFile = "${UpdateReadyFile}.tmp"
+            [System.IO.File]::WriteAllText($temporaryReadyFile, [string]$settings.settings.applicationVersion)
+            [System.IO.File]::Move($temporaryReadyFile, $UpdateReadyFile)
+        }
+    })
 
 
 # ------------------------------#
@@ -1058,96 +1230,100 @@ $window.Add_Loaded({
 <# ---- App Publishing ---- #>
 
 $var_AppPublishingChooseAppBtn.Add_Click({
-   $AppPath = Select-File -FileFilter "Business Central Extension (*.app)|*.app"
+        $AppPath = Select-File -FileFilter "Business Central Extension (*.app)|*.app"
    
-   if ([string]::IsNullOrEmpty($AppPath)) {
-        return
-   }
+        if ([string]::IsNullOrEmpty($AppPath)) {
+            return
+        }
 
-   $var_AppPublishingAppPathTxt.Text = $AppPath
+        $var_AppPublishingAppPathTxt.Text = $AppPath
 
-   try {
-        $AppInfo = Get-NAVAppInfo -Path $var_AppPublishingAppPathTxt.Text -ErrorAction Stop
-   }
-   catch {
-        $errorMessage = $_.ToString()
-        [System.Windows.Forms.MessageBox]::Show($errorMessage, "Error", "OK", "Error")
-        return     
-   }
+        try {
+            $AppInfo = Get-NAVAppInfo -Path $var_AppPublishingAppPathTxt.Text -ErrorAction Stop
+        }
+        catch {
+            $errorMessage = $_.ToString()
+            [System.Windows.Forms.MessageBox]::Show($errorMessage, "Error", "OK", "Error")
+            return     
+        }
 
-    $var_AppPublishingAppIdTxt.Text = $AppInfo.Id
-   $var_AppPublishingAppNameTxt.Text = $AppInfo.Name
-   $var_AppPublishingAppVersionTxt.Text = $AppInfo.Version
-   $var_AppPublishingAppPublisherTxt.Text = $AppInfo.Publisher
-})
+        $var_AppPublishingAppIdTxt.Text = $AppInfo.Id
+        $var_AppPublishingAppNameTxt.Text = $AppInfo.Name
+        $var_AppPublishingAppVersionTxt.Text = $AppInfo.Version
+        $var_AppPublishingAppPublisherTxt.Text = $AppInfo.Publisher
+    })
 
 $var_AppPublishingSendAppBtn.Add_Click({
-    # Test mandatory fields
-    if ([string]::IsNullOrEmpty($var_AppPublishingServerInstanceComboBox.SelectedValue)) {
-        [System.Windows.Forms.MessageBox]::Show("There is no server instance selected." , "Error", "OK", "Error")
-        return    
-    }
-
-    if ([string]::IsNullOrEmpty($var_AppPublishingAppPathTxt.Text)) {
-        [System.Windows.Forms.MessageBox]::Show("You did not select any app for publishing.", "Error", "OK", "Error")
-        return    
-    }
-
-    try {
-        $appPath = $var_AppPublishingAppPathTxt.Text
-        $appInfo = Get-NAVAppInfo -Path $appPath -ErrorAction Stop
-        $syncMode = Get-SyncMode -SyncModeComboBox $var_AppPublishingSyncModeComboBox
-        $confirmation = [System.Windows.Forms.MessageBox]::Show(("Process {0} version {1} on {2}?" -f $appInfo.Name, $appInfo.Version, $var_AppPublishingServerInstanceComboBox.SelectedValue), 'Confirm app publishing', 'YesNo', 'Question')
-        if ($confirmation -ne 'Yes') { return }
-        if ($syncMode -ne [Microsoft.Dynamics.Nav.Types.NavAppSyncMode]::Add) {
-            $confirmation = [System.Windows.Forms.MessageBox]::Show(("Process the app using sync mode {0}?`n`nThis could be destructive." -f $syncMode), 'Confirm app sync mode', 'YesNo', 'Warning')
-            if ($confirmation -ne 'Yes') { return }
+        # Test mandatory fields
+        if ([string]::IsNullOrEmpty($var_AppPublishingServerInstanceComboBox.SelectedValue)) {
+            [System.Windows.Forms.MessageBox]::Show("There is no server instance selected." , "Error", "OK", "Error")
+            return    
         }
-        Start-AppPublishingJob -Operation Single -AppPath $appPath -ServerInstance $var_AppPublishingServerInstanceComboBox.SelectedValue -SyncMode $syncMode
-    } catch {
-        [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Publishing could not start', 'OK', 'Error') | Out-Null
-    }
-})
+
+        if ([string]::IsNullOrEmpty($var_AppPublishingAppPathTxt.Text)) {
+            [System.Windows.Forms.MessageBox]::Show("You did not select any app for publishing.", "Error", "OK", "Error")
+            return    
+        }
+
+        try {
+            $appPath = $var_AppPublishingAppPathTxt.Text
+            $appInfo = Get-NAVAppInfo -Path $appPath -ErrorAction Stop
+            $syncMode = Get-SyncMode -SyncModeComboBox $var_AppPublishingSyncModeComboBox
+            $publishScope = $var_AppPublishingScopeComboBox.SelectedItem.Content.ToString()
+            $confirmation = [System.Windows.Forms.MessageBox]::Show(("Process {0} version {1} on {2} for tenant {3}?`nPublish scope: {4}" -f $appInfo.Name, $appInfo.Version, $var_AppPublishingServerInstanceComboBox.SelectedValue, (Get-TargetTenant), $publishScope), 'Confirm app publishing', 'YesNo', 'Question')
+            if ($confirmation -ne 'Yes') { return }
+            if ($syncMode -ne [Microsoft.Dynamics.Nav.Types.NavAppSyncMode]::Add) {
+                $confirmation = [System.Windows.Forms.MessageBox]::Show(("Process the app using sync mode {0}?`n`nThis could be destructive." -f $syncMode), 'Confirm app sync mode', 'YesNo', 'Warning')
+                if ($confirmation -ne 'Yes') { return }
+            }
+            Start-AppPublishingJob -Operation Single -AppPath $appPath -ServerInstance $var_AppPublishingServerInstanceComboBox.SelectedValue -SyncMode $syncMode -PublishScope $publishScope
+        }
+        catch {
+            [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Publishing could not start', 'OK', 'Error') | Out-Null
+        }
+    })
 
 
 <# ---- Multiple App Publishing ---- #>
 
 $var_MultipleAppPublishingChooseAppBtn.Add_Click({
-    $AppPath = Select-Folder
+        $AppPath = Select-Folder
        
-    if ([string]::IsNullOrEmpty($AppPath)) {
-        return
-    }
+        if ([string]::IsNullOrEmpty($AppPath)) {
+            return
+        }
 
-    $var_MultipleAppPublishingAppPathTxt.Text = $AppPath
-})
+        $var_MultipleAppPublishingAppPathTxt.Text = $AppPath
+    })
 
 $var_MultipleAppPublishingSendAppBtn.Add_Click({
-    # Test mandatory fields
-    if ([string]::IsNullOrEmpty($var_MultipleAppPublishingServerInstanceComboBox.SelectedValue)) {
-        [System.Windows.Forms.MessageBox]::Show("There is no server instance selected." , "Error", "OK", "Error")
-        return    
-    }
-
-    if ([string]::IsNullOrEmpty($var_MultipleAppPublishingAppPathTxt.Text)) {
-        [System.Windows.Forms.MessageBox]::Show("You did not select any app for publishing.", "Error", "OK", "Error")
-        return    
-    }
-
-    try {
-        $appPath = $var_MultipleAppPublishingAppPathTxt.Text
-        $syncMode = Get-SyncMode -SyncModeComboBox $var_MultipleAppPublishingSyncModeComboBox
-        $confirmation = [System.Windows.Forms.MessageBox]::Show(("Process all apps in {0}?`n`nVersions must not be older than those already published or installed." -f $appPath), 'Confirm batch publishing', 'YesNo', 'Question')
-        if ($confirmation -ne 'Yes') { return }
-        if ($syncMode -ne [Microsoft.Dynamics.Nav.Types.NavAppSyncMode]::Add) {
-            $confirmation = [System.Windows.Forms.MessageBox]::Show(("Process all apps using sync mode {0}?`n`nThis could be destructive." -f $syncMode), 'Confirm app sync mode', 'YesNo', 'Warning')
-            if ($confirmation -ne 'Yes') { return }
+        # Test mandatory fields
+        if ([string]::IsNullOrEmpty($var_MultipleAppPublishingServerInstanceComboBox.SelectedValue)) {
+            [System.Windows.Forms.MessageBox]::Show("There is no server instance selected." , "Error", "OK", "Error")
+            return    
         }
-        Start-AppPublishingJob -Operation Batch -AppPath $appPath -ServerInstance $var_MultipleAppPublishingServerInstanceComboBox.SelectedValue -SyncMode $syncMode
-    } catch {
-        [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Batch publishing could not start', 'OK', 'Error') | Out-Null
-    }
-})
+
+        if ([string]::IsNullOrEmpty($var_MultipleAppPublishingAppPathTxt.Text)) {
+            [System.Windows.Forms.MessageBox]::Show("You did not select any app for publishing.", "Error", "OK", "Error")
+            return    
+        }
+
+        try {
+            $appPath = $var_MultipleAppPublishingAppPathTxt.Text
+            $syncMode = Get-SyncMode -SyncModeComboBox $var_MultipleAppPublishingSyncModeComboBox
+            $publishScope = $var_MultipleAppPublishingScopeComboBox.SelectedItem.Content.ToString()
+            $confirmation = [System.Windows.Forms.MessageBox]::Show(("Process all apps in {0} for tenant {1}?`nPublish scope: {2}`n`nVersions must not be older than those already published or installed." -f $appPath, (Get-TargetTenant), $publishScope), 'Confirm batch publishing', 'YesNo', 'Question')
+            if ($confirmation -ne 'Yes') { return }
+            if ($syncMode -ne [Microsoft.Dynamics.Nav.Types.NavAppSyncMode]::Add) {
+                $confirmation = [System.Windows.Forms.MessageBox]::Show(("Process all apps using sync mode {0}?`n`nThis could be destructive." -f $syncMode), 'Confirm app sync mode', 'YesNo', 'Warning')
+                if ($confirmation -ne 'Yes') { return }
+            }
+            Start-AppPublishingJob -Operation Batch -AppPath $appPath -ServerInstance $var_MultipleAppPublishingServerInstanceComboBox.SelectedValue -SyncMode $syncMode -PublishScope $publishScope
+        }
+        catch {
+            [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Batch publishing could not start', 'OK', 'Error') | Out-Null
+        }
+    })
 
 
 # ------------------------------ #
@@ -1157,69 +1333,72 @@ $var_MultipleAppPublishingSendAppBtn.Add_Click({
 # License Management
 
 $var_LicenseChooseBtn.Add_Click({
-   $LicensePath = Select-File -FileFilter "Business Central License (*.flf; *.bclicense)|*.flf;*.bclicense"
+        $LicensePath = Select-File -FileFilter "Business Central License (*.flf; *.bclicense)|*.flf;*.bclicense"
    
-   if ([string]::IsNullOrEmpty($LicensePath)) {
-        return
-   }
+        if ([string]::IsNullOrEmpty($LicensePath)) {
+            return
+        }
 
-   $var_LicensePathTxt.Text = $LicensePath
-})
+        $var_LicensePathTxt.Text = $LicensePath
+    })
 
 $var_LoadBcLicenseBtn.Add_Click({
-    # Test mandatory fields
-    if ([string]::IsNullOrEmpty($var_LicenseServerInstanceComboBox.SelectedValue)) {
-        [System.Windows.Forms.MessageBox]::Show("There is no server instance selected." , "Error", "OK", "Error")
-        return    
-    }
+        # Test mandatory fields
+        if ([string]::IsNullOrEmpty($var_LicenseServerInstanceComboBox.SelectedValue)) {
+            [System.Windows.Forms.MessageBox]::Show("There is no server instance selected." , "Error", "OK", "Error")
+            return    
+        }
 
-    if ([string]::IsNullOrEmpty($var_LicensePathTxt.Text)) {
-        [System.Windows.Forms.MessageBox]::Show("There is no license file selected." , "Error", "OK", "Error")
-        return    
-    }
+        if ([string]::IsNullOrEmpty($var_LicensePathTxt.Text)) {
+            [System.Windows.Forms.MessageBox]::Show("There is no license file selected." , "Error", "OK", "Error")
+            return    
+        }
 
-    $ConfirmLoadLicenseAndRestartInstance = [System.Windows.Forms.MessageBox]::Show(("Are you sure you want to load the selected license and restart BC server instance {0}? " -f $var_LicenseServerInstanceComboBox.SelectedValue), "Confirm App Sync Mode", "YesNo", "Warning")
+        $ConfirmLoadLicenseAndRestartInstance = [System.Windows.Forms.MessageBox]::Show(("Are you sure you want to load the selected license and restart BC server instance {0}? " -f $var_LicenseServerInstanceComboBox.SelectedValue), "Confirm App Sync Mode", "YesNo", "Warning")
 
-    if ($ConfirmLoadLicenseAndRestartInstance -eq "No") {
-        return
-    }
+        if ($ConfirmLoadLicenseAndRestartInstance -eq "No") {
+            return
+        }
 
-    try {
-        Import-NAVServerLicense -LicenseFile $var_LicensePathTxt.Text -ServerInstance $var_LicenseServerInstanceComboBox.SelectedValue -ErrorAction Stop
-        Restart-NAVServerInstance -ServerInstance $var_LicenseServerInstanceComboBox.SelectedValue -ErrorAction Stop
-        [System.Windows.Forms.MessageBox]::Show("Successfully applied license file.", "Succcess", "OK", "Asterisk") | Out-Null
-    } catch {
-        $errorMessage = $_.ToString()
-        [System.Windows.Forms.MessageBox]::Show($errorMessage, "Error", "OK", "Error")
-        return
-    }
-})
+        try {
+            Start-LicenseImportJob -LicensePath $var_LicensePathTxt.Text -ServerInstance $var_LicenseServerInstanceComboBox.SelectedValue
+        }
+        catch {
+            [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'License operation could not start', 'OK', 'Error') | Out-Null
+        }
+    })
 
 $var_GetCurrentBcLicenseInfoBtn.Add_Click({
-    # Test mandatory fields
-    if ([string]::IsNullOrEmpty($var_LicenseServerInstanceComboBox.SelectedValue)) {
-        [System.Windows.Forms.MessageBox]::Show("There is no server instance selected." , "Error", "OK", "Error")
-        return    
-    }
+        # Test mandatory fields
+        if ([string]::IsNullOrEmpty($var_LicenseServerInstanceComboBox.SelectedValue)) {
+            [System.Windows.Forms.MessageBox]::Show("There is no server instance selected." , "Error", "OK", "Error")
+            return    
+        }
 
-    $currentLicenseInfo = Export-NAVServerLicenseInformation -ServerInstance $var_LicenseServerInstanceComboBox.SelectedValue | Out-String
-    $licenseWindow = [System.Windows.Window]::new()
-    $licenseWindow.Title = 'Current Business Central license'
-    $licenseWindow.Owner = $window
-    $licenseWindow.WindowStartupLocation = [System.Windows.WindowStartupLocation]::CenterOwner
-    $licenseWindow.Width = 760
-    $licenseWindow.Height = 460
-    $licenseWindow.FontFamily = $window.FontFamily
+        try {
+            $currentLicenseInfo = Export-NAVServerLicenseInformation -ServerInstance $var_LicenseServerInstanceComboBox.SelectedValue -ErrorAction Stop | Out-String
+        }
+        catch {
+            [System.Windows.Forms.MessageBox]::Show(("Could not read license information: {0}" -f $_.Exception.Message), 'License information unavailable', 'OK', 'Error') | Out-Null
+            return
+        }
+        $licenseWindow = [System.Windows.Window]::new()
+        $licenseWindow.Title = 'Current Business Central license'
+        $licenseWindow.Owner = $window
+        $licenseWindow.WindowStartupLocation = [System.Windows.WindowStartupLocation]::CenterOwner
+        $licenseWindow.Width = 760
+        $licenseWindow.Height = 460
+        $licenseWindow.FontFamily = $window.FontFamily
 
-    $licenseText = [System.Windows.Controls.TextBox]::new()
-    $licenseText.Text = $currentLicenseInfo
-    $licenseText.IsReadOnly = $true
-    $licenseText.TextWrapping = [System.Windows.TextWrapping]::Wrap
-    $licenseText.VerticalScrollBarVisibility = [System.Windows.Controls.ScrollBarVisibility]::Auto
-    $licenseText.ToolTip = 'Current license details for the selected server instance (read-only).'
-    $licenseWindow.Content = $licenseText
-    $null = $licenseWindow.ShowDialog()
-})
+        $licenseText = [System.Windows.Controls.TextBox]::new()
+        $licenseText.Text = $currentLicenseInfo
+        $licenseText.IsReadOnly = $true
+        $licenseText.TextWrapping = [System.Windows.TextWrapping]::Wrap
+        $licenseText.VerticalScrollBarVisibility = [System.Windows.Controls.ScrollBarVisibility]::Auto
+        $licenseText.ToolTip = 'Current license details for the selected server instance (read-only).'
+        $licenseWindow.Content = $licenseText
+        $null = $licenseWindow.ShowDialog()
+    })
 
 
 # ------------------------------#
@@ -1227,56 +1406,60 @@ $var_GetCurrentBcLicenseInfoBtn.Add_Click({
 # ------------------------------#
 
 $var_NavAdminToolBrowseBtn.Add_Click({
-    try {
-        $initialDirectory = Join-Path $env:ProgramFiles 'Microsoft Dynamics 365 Business Central'
-        $currentPath = $var_NavAdminTool.Text.Trim().Trim('"')
-        if ($currentPath) {
-            $currentDirectory = Split-Path -Path $currentPath -Parent
-            if ($currentDirectory -and (Test-Path -LiteralPath $currentDirectory -PathType Container)) {
-                $initialDirectory = $currentDirectory
+        try {
+            $initialDirectory = Join-Path $env:ProgramFiles 'Microsoft Dynamics 365 Business Central'
+            $currentPath = $var_NavAdminTool.Text.Trim().Trim('"')
+            if ($currentPath) {
+                $currentDirectory = Split-Path -Path $currentPath -Parent
+                if ($currentDirectory -and (Test-Path -LiteralPath $currentDirectory -PathType Container)) {
+                    $initialDirectory = $currentDirectory
+                }
             }
-        }
 
-        $dialogOwner = [BcManagerDialogOwner]::new(([System.Windows.Interop.WindowInteropHelper]::new($window).Handle))
-        $toolPath = Select-File -FileFilter 'Business Central administration tool (NavAdminTool.ps1)|NavAdminTool.ps1' -Directory $initialDirectory -Title 'Select NavAdminTool.ps1' -Owner $dialogOwner
-        if ([string]::IsNullOrEmpty($toolPath)) { return }
-        if ([System.IO.Path]::GetFileName($toolPath) -ine 'NavAdminTool.ps1') {
-            throw 'Select the file named NavAdminTool.ps1 from your Business Central installation.'
-        }
+            $dialogOwner = [BcManagerDialogOwner]::new(([System.Windows.Interop.WindowInteropHelper]::new($window).Handle))
+            $toolPath = Select-File -FileFilter 'Business Central administration tool (NavAdminTool.ps1)|NavAdminTool.ps1' -Directory $initialDirectory -Title 'Select NavAdminTool.ps1' -Owner $dialogOwner
+            if ([string]::IsNullOrEmpty($toolPath)) { return }
+            if ([System.IO.Path]::GetFileName($toolPath) -ine 'NavAdminTool.ps1') {
+                throw 'Select the file named NavAdminTool.ps1 from your Business Central installation.'
+            }
 
-        $var_NavAdminTool.Text = $toolPath
-        $null = $var_NavAdminTool.Focus()
-        $var_NavAdminTool.CaretIndex = $toolPath.Length
-    } catch {
-        [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Could not select NavAdminTool', 'OK', 'Error') | Out-Null
-    }
-})
+            $var_NavAdminTool.Text = $toolPath
+            $null = $var_NavAdminTool.Focus()
+            $var_NavAdminTool.CaretIndex = $toolPath.Length
+        }
+        catch {
+            [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Could not select NavAdminTool', 'OK', 'Error') | Out-Null
+        }
+    })
 
 $var_SettingsSaveBtn.Add_Click({
-    $navAdminToolPath = $var_NavAdminTool.Text.Trim().Trim('"')
-    if ($navAdminToolPath -and
-        (-not (Test-Path -LiteralPath $navAdminToolPath -PathType Leaf -ErrorAction SilentlyContinue) -or
-         [System.IO.Path]::GetFileName($navAdminToolPath) -ine 'NavAdminTool.ps1')) {
-        [System.Windows.Forms.MessageBox]::Show('Choose an existing NavAdminTool.ps1 file, or leave the path blank to detect the installation automatically.', 'Invalid NavAdminTool path', 'OK', 'Warning') | Out-Null
-        $null = $var_NavAdminTool.Focus()
-        return
-    }
-    $var_NavAdminTool.Text = $navAdminToolPath
+        $navAdminToolPath = $var_NavAdminTool.Text.Trim().Trim('"')
+        if ($navAdminToolPath -and
+            (-not (Test-Path -LiteralPath $navAdminToolPath -PathType Leaf -ErrorAction SilentlyContinue) -or
+            [System.IO.Path]::GetFileName($navAdminToolPath) -ine 'NavAdminTool.ps1')) {
+            [System.Windows.Forms.MessageBox]::Show('Choose an existing NavAdminTool.ps1 file, or leave the path blank to detect the installation automatically.', 'Invalid NavAdminTool path', 'OK', 'Warning') | Out-Null
+            $null = $var_NavAdminTool.Focus()
+            return
+        }
+        $var_NavAdminTool.Text = $navAdminToolPath
 
-    $ConfirmSaveSettings = [System.Windows.Forms.MessageBox]::Show("Are you sure you want to update application settings and restart?", "Confirm Save and Restart", "YesNo", "Warning")
+        $ConfirmSaveSettings = [System.Windows.Forms.MessageBox]::Show("Are you sure you want to update application settings and restart?", "Confirm Save and Restart", "YesNo", "Warning")
     
-    if ($ConfirmSaveSettings -eq "No") {
-        return
-    }
+        if ($ConfirmSaveSettings -eq "No") {
+            return
+        }
 
-    # Load settings from settings.json variable that has been changed to be saved
-    foreach ($key in $settings.settings.PSObject.Properties) {
-        Save-ApplicationSetting -SettingName $key.Name -PreviousValue $key.Value
-    }   
+        try {
+            Save-ApplicationSettings
+        }
+        catch {
+            [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Settings not saved', 'OK', 'Error') | Out-Null
+            return
+        }
 
-    # Restart the app
-    Restart-BusinessCentralManager
-})
+        # Restart the app
+        Restart-BusinessCentralManager
+    })
 
 
 # ------------------------------ #
@@ -1284,30 +1467,30 @@ $var_SettingsSaveBtn.Add_Click({
 # ------------------------------ #
 
 $var_CheckForUpdatesBtn.Add_Click({
-    try {
-        Invoke-BusinessCentralManagerUpdateCheck -ShowUpToDateMessage $true
-    } catch {
-        $errorMessage = $_.ToString()
-        [System.Windows.Forms.MessageBox]::Show($errorMessage, "Error", "OK", "Error")
-        Exit
-    }
-})
+        try {
+            Invoke-BusinessCentralManagerUpdateCheck -ShowUpToDateMessage $true
+        }
+        catch {
+            $errorMessage = $_.ToString()
+            [System.Windows.Forms.MessageBox]::Show($errorMessage, "Error", "OK", "Error") | Out-Null
+        }
+    })
 
 $var_GitHubLink.Add_Click({
-    # Get the URL from the NavigateUri property of the Hyperlink control
-    $url = $var_GitHubLink.NavigateUri.AbsoluteUri
+        # Get the URL from the NavigateUri property of the Hyperlink control
+        $url = $var_GitHubLink.NavigateUri.AbsoluteUri
 
-    # Open the URL in the default web browser
-    Start-Process $url
-})
+        # Open the URL in the default web browser
+        Start-Process $url
+    })
 
 $var_ShowDocumentationBtn.Add_Click({
-    # Get the path to the manual
-    $manualPath = Join-Path ($PSScriptRoot | Split-Path) 'docs\Business Central Manager - Manual.pdf'
+        # Get the path to the manual
+        $manualPath = Join-Path ($PSScriptRoot | Split-Path) 'docs\Business Central Manager - Manual.pdf'
 
-    # Open the manual with the default PDF viewer
-    Start-Process $manualPath
-})
+        # Open the manual with the default PDF viewer
+        Start-Process $manualPath
+    })
 
 
 $Null = $window.ShowDialog()

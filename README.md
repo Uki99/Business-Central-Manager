@@ -10,6 +10,9 @@ Download the latest release from [releases](https://github.com/Uki99/Business-Ce
 
 In Settings, set the tenant ID for app publishing (the default is `default`). Use the ellipsis button beside **NavAdminTool path** to select `NavAdminTool.ps1` from the desired Business Central installation. Leave the path blank for automatic detection when exactly one installation is available. Set the version filter for your target (for example, `^28\.` for BC 28). If automatic unpublishing of previous app versions is enabled, it will only proceed when no tenant still has the old version installed.
 
+Both publishing tabs default to Tenant scope, which publishes packages only to the selected tenant. Select Global to make packages available to all tenants on the server. Batch publishing requires BcContainerHelper; if it is missing, open Container Management to install it before retrying.
+When a version is already published, its PackageId must match the selected .app file. If the package identity differs or cannot be verified, rebuild the app with a higher version before deploying.
+
 ## Usage
 
 A detailed [manual](Business%20Central%20Manager/docs/Business%20Central%20Manager%20-%20Manual.pdf) is included in the `Business Central Manager/docs` folder.

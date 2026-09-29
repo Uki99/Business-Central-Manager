@@ -4,6 +4,7 @@ param (
     [string] $ServerInstance,
     [string] $Tenant,
     [string] $SyncMode,
+    [ValidateSet('Tenant', 'Global')] [string] $PublishScope,
     [string] $NavAdminToolPath,
     [bool] $UnpublishPreviousAppVersion,
     [string] $MainScriptPath
@@ -51,21 +52,23 @@ if ($Operation -eq 'Batch') {
     foreach ($app in $orderedApps) {
         $appName = [System.IO.Path]::GetFileNameWithoutExtension($app)
         $appVersion = ''
+        $appWarnings = $null
         try {
             $appInfo = Get-NAVAppInfo -Path $app -ErrorAction Stop
             $appName = $appInfo.Name
             $appVersion = $appInfo.Version
-            $hasErrors = Invoke-BusinessCentralAppDeployment -AppPath $app -ServerInstance $ServerInstance -Tenant $Tenant -SyncMode $syncModeValue -SuppressGui $true
+            $hasErrors = Invoke-BusinessCentralAppDeployment -AppPath $app -ServerInstance $ServerInstance -Tenant $Tenant -SyncMode $syncModeValue -PublishScope $PublishScope -SuppressGui $true -WarningVariable appWarnings
         }
         catch {
             $hasErrors = $true
             Write-Warning ("Could not process {0}: {1}" -f $appName, $_.Exception.Message)
         }
-        [pscustomobject]@{ Kind = 'App'; Name = $appName; Version = $appVersion; Succeeded = (-not $hasErrors) }
+        [pscustomobject]@{ Kind = 'App'; Name = $appName; Version = $appVersion; Succeeded = (-not $hasErrors); HasWarnings = (@($appWarnings).Count -gt 0) }
     }
 }
 else {
     $appInfo = Get-NAVAppInfo -Path $AppPath -ErrorAction Stop
-    $hasErrors = Invoke-BusinessCentralAppDeployment -AppPath $AppPath -ServerInstance $ServerInstance -Tenant $Tenant -SyncMode $syncModeValue -SuppressGui $true
-    [pscustomobject]@{ Kind = 'App'; Name = $appInfo.Name; Version = $appInfo.Version; Succeeded = (-not $hasErrors) }
+    $appWarnings = $null
+    $hasErrors = Invoke-BusinessCentralAppDeployment -AppPath $AppPath -ServerInstance $ServerInstance -Tenant $Tenant -SyncMode $syncModeValue -PublishScope $PublishScope -SuppressGui $true -WarningVariable appWarnings
+    [pscustomobject]@{ Kind = 'App'; Name = $appInfo.Name; Version = $appInfo.Version; Succeeded = (-not $hasErrors); HasWarnings = (@($appWarnings).Count -gt 0) }
 }

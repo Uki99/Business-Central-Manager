@@ -4,6 +4,29 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName PresentationFramework
 
+function Restore-BusinessCentralManagerRelease {
+    param ([object[]] $Overwritten, [string[]] $Created)
+
+    $rollbackErrors = @()
+    foreach ($entry in $Overwritten) {
+        try {
+            Copy-Item -LiteralPath $entry.Backup -Destination $entry.Destination -Force -ErrorAction Stop
+        } catch {
+            $rollbackErrors += $_.Exception.Message
+        }
+    }
+    foreach ($destination in $Created) {
+        try {
+            if (Test-Path -LiteralPath $destination -PathType Leaf) {
+                Remove-Item -LiteralPath $destination -Force -ErrorAction Stop
+            }
+        } catch {
+            $rollbackErrors += $_.Exception.Message
+        }
+    }
+    return $rollbackErrors
+}
+
 function Copy-BusinessCentralManagerRelease {
     [CmdletBinding()]
     param (
@@ -20,6 +43,9 @@ function Copy-BusinessCentralManagerRelease {
     foreach ($file in $files) {
         $relativePath = $file.FullName.Substring($SourceRoot.TrimEnd('\').Length + 1)
         $destination = Join-Path $DestinationRoot $relativePath
+        if ((Test-Path -LiteralPath $destination) -and -not (Test-Path -LiteralPath $destination -PathType Leaf)) {
+            throw "Cannot update because a directory exists where a file is expected: $destination"
+        }
         if (Test-Path -LiteralPath $destination -PathType Leaf) {
             $backup = Join-Path $BackupRoot $relativePath
             $null = [System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName($backup))
@@ -39,29 +65,47 @@ function Copy-BusinessCentralManagerRelease {
         }
     } catch {
         $copyError = $_.Exception.Message
-        $rollbackErrors = @()
-        foreach ($entry in $overwritten) {
-            try {
-                Copy-Item -LiteralPath $entry.Backup -Destination $entry.Destination -Force -ErrorAction Stop
-            } catch {
-                $rollbackErrors += $_.Exception.Message
-            }
-        }
-        foreach ($destination in $created) {
-            try {
-                if (Test-Path -LiteralPath $destination -PathType Leaf) {
-                    Remove-Item -LiteralPath $destination -Force -ErrorAction Stop
-                }
-            } catch {
-                $rollbackErrors += $_.Exception.Message
-            }
-        }
+        $rollbackErrors = @(Restore-BusinessCentralManagerRelease -Overwritten $overwritten -Created $created)
         if ($rollbackErrors.Count -gt 0) {
             $failure = New-Object System.InvalidOperationException ("Update failed: {0}. Rollback incomplete; backups remain at {1}: {2}" -f $copyError, $BackupRoot, ($rollbackErrors -join '; '))
             $failure.Data['PreserveBackup'] = $true
             throw $failure
         }
         throw "Update failed and previous files were restored: $copyError"
+    }
+    return [pscustomobject]@{ Overwritten = $overwritten; Created = $created }
+}
+
+function Wait-BusinessCentralManagerStartup {
+    param (
+        [System.Diagnostics.Process] $Process,
+        [string] $ReadyFile,
+        [string] $ExpectedVersion,
+        [int] $TimeoutSeconds = 60
+    )
+
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while (-not (Test-Path -LiteralPath $ReadyFile -PathType Leaf)) {
+        if ($Process.HasExited) { throw "Updated application exited before its window loaded (exit code $($Process.ExitCode))." }
+        if ((Get-Date) -ge $deadline) { throw "Updated application did not confirm startup within $TimeoutSeconds seconds." }
+        Start-Sleep -Milliseconds 200
+    }
+    if ([System.IO.File]::ReadAllText($ReadyFile) -ne $ExpectedVersion -or $Process.HasExited) {
+        throw 'Updated application did not start with the expected version.'
+    }
+}
+
+function Stop-UpdatedBusinessCentralManager {
+    param ([System.Diagnostics.Process] $Process)
+
+    if (-not $Process -or $Process.HasExited) { return }
+    try {
+        $Process.Kill()
+    } catch {
+        if (-not $Process.HasExited) { throw }
+    }
+    if (-not $Process.WaitForExit(10000)) {
+        throw 'Updated application did not exit within 10 seconds.'
     }
 }
 
@@ -102,10 +146,10 @@ function Update-BusinessCentralManager {
     Invoke-WebRequest -Uri $zipballUrl -OutFile $tempZipPath -ErrorAction Stop
     
     # Extract the zipball
-    Expand-Archive -Path $tempZipPath -DestinationPath $tempFolder -Force -ErrorAction Stop
+    Expand-Archive -LiteralPath $tempZipPath -DestinationPath $tempFolder -Force -ErrorAction Stop
 
     # Search for the dynamically generated folder name
-    $generatedFolder = Get-ChildItem -Path $tempFolder -Directory | Where-Object { $_.Name -like "$Owner-$Repository-*" }
+    $generatedFolder = Get-ChildItem -LiteralPath $tempFolder -Directory -ErrorAction Stop | Where-Object { $_.Name -like "$Owner-$Repository-*" }
 
     # Check if the folder was found
     if ($generatedFolder) {
@@ -115,7 +159,8 @@ function Update-BusinessCentralManager {
         throw "Temp path could not be resolved while updating Business Central manager."
     }
 
-    $tempSettings = Get-Content ($fullPathToGeneratedFolder + "\Business Central Manager\data\settings.json") -Raw | ConvertFrom-Json -ErrorAction Stop
+    $tempSettingsPath = Join-Path $fullPathToGeneratedFolder 'Business Central Manager\data\settings.json'
+    $tempSettings = Get-Content -LiteralPath $tempSettingsPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
 
     $tempVersion = [version] $tempSettings.settings.applicationVersion
     # Step 4: Check if update is needed
@@ -137,9 +182,33 @@ function Update-BusinessCentralManager {
         }
         $stagedSettingsPath = Join-Path $fullPathToGeneratedFolder 'Business Central Manager\data\settings.json'
         $tempSettings | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $stagedSettingsPath -Encoding UTF8 -ErrorAction Stop
-        Copy-BusinessCentralManagerRelease -SourceRoot $fullPathToGeneratedFolder -DestinationRoot $applicationRootLocation -BackupRoot (Join-Path $tempRoot 'backup')
-        
-        Restart-BusinessCentralManager
+        $backupRoot = Join-Path $tempRoot 'backup'
+        $rollbackPlan = Copy-BusinessCentralManagerRelease -SourceRoot $fullPathToGeneratedFolder -DestinationRoot $applicationRootLocation -BackupRoot $backupRoot
+        $readyFile = Join-Path $tempRoot 'startup.ready'
+        $restartProcess = $null
+
+        try {
+            $restartProcess = Start-UpdatedBusinessCentralManager -ReadyFile $readyFile -HideConsole ([bool]$tempSettings.settings.hidePowerShellConsole)
+            Wait-BusinessCentralManagerStartup -Process $restartProcess -ReadyFile $readyFile -ExpectedVersion ([string]$tempVersion)
+        } catch {
+            $restartError = $_.Exception.Message
+            try {
+                Stop-UpdatedBusinessCentralManager -Process $restartProcess
+            } catch {
+                $failure = New-Object System.InvalidOperationException ("Could not confirm startup: {0}. The new process could not be stopped: {1}. Backup remains at {2}." -f $restartError, $_.Exception.Message, $backupRoot)
+                $failure.Data['PreserveBackup'] = $true
+                throw $failure
+            }
+            $rollbackErrors = @(Restore-BusinessCentralManagerRelease -Overwritten $rollbackPlan.Overwritten -Created $rollbackPlan.Created)
+            if ($rollbackErrors.Count -gt 0) {
+                $failure = New-Object System.InvalidOperationException ("Restart failed: {0}. Rollback incomplete; backups remain at {1}: {2}" -f $restartError, $backupRoot, ($rollbackErrors -join '; '))
+                $failure.Data['PreserveBackup'] = $true
+                throw $failure
+            }
+            throw "Restart failed and previous files were restored: $restartError"
+        } finally {
+            if ($restartProcess) { $restartProcess.Dispose() }
+        }
         Write-Host "Successfully updated Business Central Manager to version $tempVersion. Restarting application.`n" -ForegroundColor Green
         [System.Windows.Forms.MessageBox]::Show(("Successfully updated Business Central Manager to version {0}. Restarting application." -f $tempVersion), "Success", "OK", "Asterisk") | Out-Null
         Exit 200
@@ -160,7 +229,10 @@ function Update-BusinessCentralManager {
     }
 }
 
-function Restart-BusinessCentralManager {
-    $launcherPath = Join-Path ($PSScriptRoot | Split-Path | Split-Path) 'Start-BusinessCentralManager.cmd'
-    Start-Process -FilePath $launcherPath -WindowStyle Hidden -ErrorAction Stop
+function Start-UpdatedBusinessCentralManager {
+    param ([string] $ReadyFile, [bool] $HideConsole)
+
+    $scriptPath = Join-Path ($PSScriptRoot | Split-Path | Split-Path) 'scripts\Start-BusinessCentralManager.ps1'
+    $windowStyle = if ($HideConsole) { 'Hidden' } else { 'Normal' }
+    Start-Process -FilePath 'powershell.exe' -ArgumentList ('-NoProfile -ExecutionPolicy Unrestricted -File "{0}" -UpdateReadyFile "{1}"' -f $scriptPath, $ReadyFile) -WindowStyle $windowStyle -PassThru -ErrorAction Stop
 }
